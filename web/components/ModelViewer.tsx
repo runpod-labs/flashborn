@@ -97,26 +97,21 @@ export default function ModelViewer({
           src={src}
           poster={poster}
           alt="3D collectible"
-          camera-controls
-          disable-zoom
-          disable-pan
-          disable-tap
           camera-orbit="0deg 82deg 105%"
-          // Drag turns the REAL 3D model left/right (true 3D, never a skewed
-          // flat image). Clamped azimuth so you see the sides but never the
-          // back; clamped polar so it stays upright. No auto-rotate.
-          min-camera-orbit="-55deg 65deg auto"
-          max-camera-orbit="55deg 98deg auto"
           field-of-view="32deg"
+          interaction-prompt="none"
           shadow-intensity="1"
           exposure="1.05"
-          interaction-prompt="none"
           loading="eager"
           reveal="auto"
           style={{
             width: "100%",
             height: "100%",
             background: "transparent",
+            // Display-only: the model is rendered ON the card surface and never
+            // orbits on its own. It skews together with the card when you tilt
+            // the whole card in hand (pointer events pass through to the frame).
+            pointerEvents: "none",
             "--poster-color": "transparent",
           } as React.CSSProperties}
         />

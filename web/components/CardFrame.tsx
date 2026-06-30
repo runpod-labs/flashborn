@@ -121,10 +121,10 @@ export default function CardFrame({
   const [m, setM] = useState({ px: 0, py: 0, active: false });
 
   function onMove(e: React.MouseEvent) {
-    // Only 2D cards tilt in-hand. 3D cards do NOT move at all: turning is done by
-    // orbiting the real 3D model (model-viewer camera-controls), so the frame
-    // stays put and the figure rotates cleanly instead of looking skewed.
-    if (show3d) return;
+    // Tilt the WHOLE card like holding it in your hand. Everything on the card —
+    // including the 3D model / artwork — skews together with the frame. It only
+    // changes skew/perspective, never position, and the model never orbits on
+    // its own.
     const el = ref.current;
     if (!el) return;
     const b = el.getBoundingClientRect();
@@ -136,9 +136,12 @@ export default function CardFrame({
     setM({ px: 0, py: 0, active: false });
   }
 
+  // Turn left/right (and a little up/down), clamped so you never flip past the
+  // edge to the back of the card.
+  const clamp = (v: number, lim: number) => Math.max(-lim, Math.min(lim, v));
   const transform = m.active
-    ? `rotateX(${-m.py * 9}deg) rotateY(${m.px * 11}deg) scale(1.02)`
-    : "rotateX(0) rotateY(0)";
+    ? `rotateX(${clamp(-m.py * 70, 30)}deg) rotateY(${clamp(m.px * 130, 55)}deg)`
+    : "rotateX(0deg) rotateY(0deg)";
 
   return (
     <div
