@@ -1,6 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { factionV, roleV, rarityV, keywordV } from "./schema";
+import { factionV, roleV, rarityV, keywordV, kindV } from "./schema";
 import { requireAdmin } from "./lib";
 
 function slugify(name: string) {
@@ -26,6 +26,7 @@ export const publishCard = mutation({
   args: {
     projectId: v.optional(v.id("generationProjects")),
     name: v.string(),
+    kind: v.optional(kindV),
     faction: factionV,
     role: roleV,
     rarity: rarityV,
@@ -71,6 +72,7 @@ export const publishCard = mutation({
       projectId: args.projectId,
       name: args.name,
       slug,
+      kind: args.kind ?? "character",
       faction: args.faction,
       role: args.role,
       rarity: args.rarity,

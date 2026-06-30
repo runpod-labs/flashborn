@@ -3,7 +3,7 @@
 // The browser Forge uses the authenticated mutations in projects/generation/cards.
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { factionV, roleV, rarityV, keywordV, jobStatusV } from "./schema";
+import { factionV, roleV, rarityV, keywordV, kindV, jobStatusV } from "./schema";
 
 export const listPools = query({
   args: {},
@@ -191,6 +191,7 @@ export const publishCard = mutation({
   args: {
     projectId: v.optional(v.id("generationProjects")),
     name: v.string(),
+    kind: v.optional(kindV),
     faction: factionV,
     role: roleV,
     rarity: rarityV,
@@ -228,6 +229,7 @@ export const publishCard = mutation({
       projectId: args.projectId,
       name: args.name,
       slug,
+      kind: args.kind ?? "character",
       faction: args.faction,
       role: args.role,
       rarity: args.rarity,

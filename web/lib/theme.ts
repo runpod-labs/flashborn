@@ -1,6 +1,6 @@
 // Client-side faction/rarity visual tokens for the card frame + UI.
 // Mirrors packages/shared color identity; here as ready-to-use CSS values.
-import type { FactionId, RarityId, RoleId } from "@flashborn/shared";
+import type { FactionId, RarityId, RoleId, CardKind } from "@flashborn/shared";
 
 export const FACTION_THEME: Record<
   FactionId,
@@ -55,4 +55,10 @@ export const ROLE_LABEL: Record<RoleId, string> = {
   guardian: "Guardian",
   support: "Support",
   disruptor: "Disruptor",
+};
+
+export const KIND_LABEL: Record<CardKind, string> = {
+  character: "Character",
+  item: "Item",
+  place: "Location",
 };

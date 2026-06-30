@@ -10,28 +10,65 @@ import {
   type FactionId,
   type RoleId,
   type RarityId,
+  type CardKind,
 } from "@flashborn/shared";
 
 export interface ConceptInput {
   faction: FactionId;
   role: RoleId;
   rarity: RarityId;
+  /** Defaults to "character". Items render as objects, places as environments. */
+  kind?: CardKind;
   character: string;
   extra?: string;
 }
 
 export function buildConceptPrompt(i: ConceptInput): string {
   const f = FACTION_DEFS[i.faction];
-  const r = ROLE_DEFS[i.role];
   const rar = RARITY_DEFS[i.rarity];
   const colors = f.colors.map((c) => c.name.toLowerCase()).join(", ");
+  const subject = i.character.trim().replace(/\.$/, "");
+  const extra = i.extra ? `${i.extra.trim().replace(/\.$/, "")}.` : "";
+  const kind = i.kind ?? "character";
+
+  if (kind === "item") {
+    // A single hero object — gear / relic / device. Centered for 3D capture.
+    return [
+      `A premium product render of ${subject}: a single cyberpunk collectible object.`,
+      `${f.name} faction: ${f.visualLanguage.join(", ")}.`,
+      `Color palette ${colors}.`,
+      `${rar.name} tier: ${rar.visual.join(", ")}.`,
+      extra,
+      `Single centered object, no characters, no people, no hands, fully visible, clear readable silhouette, floating on a plain neutral seamless dark studio background, dramatic neon rim lighting in ${colors}, crisp physically based materials, highly detailed professional collectible product render.`,
+      `Clean image with no text, no letters, no numbers, no logos, no watermark, no captions, no UI.`,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  if (kind === "place") {
+    // An environment / location — wide establishing shot, no characters.
+    return [
+      `A cinematic establishing shot of ${subject}: an iconic cyberpunk location in a neon megacity.`,
+      `${f.name} faction atmosphere: ${f.visualLanguage.join(", ")}.`,
+      `Color palette ${colors}.`,
+      `${rar.name} tier: ${rar.visual.join(", ")}.`,
+      extra,
+      `Wide atmospheric environment, no characters, no people, no creatures, strong neon ${colors} lighting and volumetric haze, deep cyberpunk architecture, premium collectible card key art, highly detailed.`,
+      `Clean image with no text, no letters, no numbers, no logos, no watermark, no captions, no UI.`,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  const r = ROLE_DEFS[i.role];
   return [
-    `A full-body character render of ${i.character.trim().replace(/\.$/, "")}.`,
+    `A full-body character render of ${subject}.`,
     `${f.name} faction: ${f.visualLanguage.join(", ")}.`,
     `Color palette ${colors}.`,
     `${r.name} role: ${r.silhouette.join(", ")}.`,
     `${rar.name} tier: ${rar.visual.join(", ")}.`,
-    i.extra ? `${i.extra.trim().replace(/\.$/, "")}.` : "",
+    extra,
     `Single centered character, complete body visible head to feet, clear readable silhouette, plain neutral seamless studio background, dramatic neon rim lighting in ${colors}, physically based materials, highly detailed professional video-game character concept render.`,
     `Clean image with no text, no letters, no numbers, no logos, no watermark, no captions, no UI, no base, no pedestal.`,
   ]

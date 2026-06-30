@@ -29,6 +29,11 @@ export const keywordV = v.union(
   v.literal("spawn"),
   v.literal("overclock"),
 );
+export const kindV = v.union(
+  v.literal("character"),
+  v.literal("item"),
+  v.literal("place"),
+);
 export const stageV = v.union(
   v.literal("draft"),
   v.literal("concept_generating"),
@@ -140,6 +145,7 @@ export default defineSchema({
     projectId: v.optional(v.id("generationProjects")),
     name: v.string(),
     slug: v.string(),
+    kind: v.optional(kindV),
     faction: factionV,
     role: roleV,
     rarity: rarityV,

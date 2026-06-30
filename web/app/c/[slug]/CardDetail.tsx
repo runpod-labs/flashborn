@@ -10,7 +10,7 @@ import { KEYWORD_DEFS } from "@flashborn/shared";
 import CardFrame, { type CardFrameData } from "@/components/CardFrame";
 import { ButtonLink } from "@/components/Button";
 import ShareButton from "@/components/ShareButton";
-import { FACTION_THEME, RARITY_THEME, ROLE_LABEL } from "@/lib/theme";
+import { FACTION_THEME, RARITY_THEME, ROLE_LABEL, KIND_LABEL } from "@/lib/theme";
 
 type CardDoc = CardFrameData & {
   _id: Id<"cardDefinitions">;
@@ -126,6 +126,8 @@ export default function CardDetail({ slug }: { slug: string }) {
   const f = FACTION_THEME[card.faction];
   const r = RARITY_THEME[card.rarity];
   const keywordDef = card.keyword ? KEYWORD_DEFS[card.keyword] : null;
+  const kind = card.kind ?? "character";
+  const isCharacter = kind === "character";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -173,14 +175,20 @@ export default function CardDetail({ slug }: { slug: string }) {
               {r.name}
             </span>
             <span className="text-faint">·</span>
-            <span className="text-muted">{ROLE_LABEL[card.role]}</span>
+            <span className="text-muted">
+              {isCharacter ? ROLE_LABEL[card.role] : KIND_LABEL[kind]}
+            </span>
           </div>
 
-          {/* Stats */}
+          {/* Stats — items/places only carry an energy cost; the effect is the ability. */}
           <div className="mt-6 flex flex-wrap gap-3">
             <Stat label="Cost" value={card.cost} color={f.secondary} />
-            <Stat label="Attack" value={card.attack} color={f.primary} />
-            <Stat label="Health" value={card.health} color={f.primary} />
+            {isCharacter && (
+              <>
+                <Stat label="Attack" value={card.attack} color={f.primary} />
+                <Stat label="Health" value={card.health} color={f.primary} />
+              </>
+            )}
           </div>
 
           {/* Share — this is the global, public page for this card */}

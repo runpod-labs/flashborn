@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { FactionId, RoleId, RarityId, KeywordId } from "@flashborn/shared";
+import type { FactionId, RoleId, RarityId, KeywordId, CardKind } from "@flashborn/shared";
 import { FACTION_THEME, RARITY_THEME } from "@/lib/theme";
 import { FactionBadge } from "./FactionBadge";
 import { RoleBadge } from "./RoleBadge";
+import { KindBadge } from "./KindBadge";
 import { RarityGem } from "./RarityBadge";
 import ModelViewer from "./ModelViewer";
 
@@ -16,12 +17,30 @@ const STAT_META = {
   health: { color: "#46D39A", label: "Health", icon: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" },
 } as const;
 
-function StatBar({ cost, attack, health, size }: { cost: number; attack: number; health: number; size: Size }) {
+function StatBar({
+  cost,
+  attack,
+  health,
+  size,
+  combat,
+}: {
+  cost: number;
+  attack: number;
+  health: number;
+  size: Size;
+  combat: boolean;
+}) {
   const big = size === "lg";
   const compact = size === "sm";
-  const entries = [["cost", cost], ["attack", attack], ["health", health]] as const;
+  // Characters carry the full combat triad; items/places only have an energy
+  // cost — their effect lives in the ability text, so we don't show 0/0.
+  const entries = (
+    combat
+      ? [["cost", cost], ["attack", attack], ["health", health]]
+      : [["cost", cost]]
+  ) as ReadonlyArray<readonly ["cost" | "attack" | "health", number]>;
   return (
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className={`grid gap-1.5 ${combat ? "grid-cols-3" : "grid-cols-1"}`}>
       {entries.map(([kind, value]) => {
         const m = STAT_META[kind];
         return (
@@ -58,6 +77,7 @@ function StatBar({ cost, attack, health, size }: { cost: number; attack: number;
 
 export type CardFrameData = {
   name: string;
+  kind?: CardKind | null;
   faction: FactionId;
   role: RoleId;
   rarity: RarityId;
@@ -94,6 +114,8 @@ export default function CardFrame({
   const isLegendary = r.holo;
   const show3d = interactive3d && !!card.modelUrl;
   const compact = size === "sm";
+  const kind = card.kind ?? "character";
+  const isCharacter = kind === "character";
 
   const ref = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
@@ -160,7 +182,7 @@ export default function CardFrame({
           {/* ---------- Header ---------- */}
           <div className="relative z-10 flex items-start justify-between gap-2 px-3 pt-3">
             <FactionBadge faction={card.faction} showName={!compact} />
-            <RoleBadge role={card.role} />
+            {isCharacter ? <RoleBadge role={card.role} /> : <KindBadge kind={kind} />}
           </div>
 
           {/* ---------- Art / 3D area ---------- */}
@@ -252,7 +274,7 @@ export default function CardFrame({
 
           {/* ---------- Stats footer: energy cost / attack / health, grouped with icons ---------- */}
           <div className="relative z-10 px-3 pb-3 pt-2">
-            <StatBar cost={card.cost} attack={card.attack} health={card.health} size={size} />
+            <StatBar cost={card.cost} attack={card.attack} health={card.health} size={size} combat={isCharacter} />
           </div>
         </div>
       </div>
