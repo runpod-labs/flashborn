@@ -9,6 +9,7 @@ import type { FactionId, RoleId, RarityId, KeywordId } from "@flashborn/shared";
 import { KEYWORD_DEFS } from "@flashborn/shared";
 import CardFrame, { type CardFrameData } from "@/components/CardFrame";
 import { ButtonLink } from "@/components/Button";
+import ShareButton from "@/components/ShareButton";
 import { FACTION_THEME, RARITY_THEME, ROLE_LABEL } from "@/lib/theme";
 
 type CardDoc = CardFrameData & {
@@ -180,6 +181,15 @@ export default function CardDetail({ slug }: { slug: string }) {
             <Stat label="Cost" value={card.cost} color={f.secondary} />
             <Stat label="Attack" value={card.attack} color={f.primary} />
             <Stat label="Health" value={card.health} color={f.primary} />
+          </div>
+
+          {/* Share — this is the global, public page for this card */}
+          <div className="mt-6">
+            <ShareButton
+              title={`${card.name} — Flashborn`}
+              text={`${card.name} — a ${r.name} ${ROLE_LABEL[card.role]} from the ${f.name} faction in Flashborn.`}
+              accent={f.primary}
+            />
           </div>
 
           {/* Keyword */}

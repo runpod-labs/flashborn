@@ -76,7 +76,7 @@ export default function ExplorePage() {
               <p className="mt-8 mb-4 text-xs font-bold uppercase tracking-[0.25em] text-muted">
                 {list.length} card{list.length === 1 ? "" : "s"}
               </p>
-              <div className="flex flex-wrap justify-center gap-5 sm:justify-start">
+              <div className="flex flex-wrap justify-center gap-5">
                 {list.map((c) => (
                   <Link
                     key={c._id}

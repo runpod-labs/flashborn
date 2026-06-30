@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/Button";
 
 type Flow = "signIn" | "signUp";
@@ -13,7 +11,6 @@ type Flow = "signIn" | "signUp";
 export default function SignInPage() {
   const router = useRouter();
   const { signIn } = useAuthActions();
-  const ensureProfile = useMutation(api.users.ensureProfile);
 
   const [flow, setFlow] = useState<Flow>("signIn");
   const [email, setEmail] = useState("");
@@ -21,12 +18,10 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "credentials" | "guest">(null);
 
-  async function finish() {
-    try {
-      await ensureProfile();
-    } catch {
-      // profile may already exist — ignore
-    }
+  function finish() {
+    // Profile creation is handled by useEnsureProfile() (mounted in TopNav),
+    // which waits for the Convex client to be authenticated. Calling
+    // ensureProfile() here races the auth token and throws "Not authenticated".
     router.push("/");
   }
 

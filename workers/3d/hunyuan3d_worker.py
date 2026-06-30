@@ -19,7 +19,7 @@ VOL = "/runpod-volume"
     gpu=GpuGroup.AMPERE_80,             # A100 80GB (sm_80); ext compiled for this arch
     workers=(0, 1),                    # scale-to-zero when idle (no cost); ~113s cold start on first call. max 1: texture stage hangs under parallel contention
     max_concurrency=1,
-    idle_timeout=600,
+    idle_timeout=1200,                 # keep the worker warm 20 min between requests (demo)
     flashboot=False,                   # fresh code on each redeploy
     execution_timeout_ms=1800000,      # 30 min cap — fresh-volume build (clone+venv+CUDA ext) needs headroom
     volume=NetworkVolume(name="flashborn-hunyuan3d-vol", size=100),
@@ -281,8 +281,18 @@ print(f"  PAINT DONE {round(time.time()-t,1)}s", flush=True)
                 rembg = "pkg"
             sys._hy3d_rembg = rembg
 
-        def _img(b64):
-            im = Image.open(io.BytesIO(base64.b64decode(b64)))
+        def _fetch(b64key, urlkey):
+            # Prefer a URL (e.g. a Convex storage URL) so big images don't have to
+            # be inlined as base64 in the request body (Runpod's ~10MB request cap).
+            if g.get(urlkey):
+                import requests
+                return requests.get(g[urlkey], timeout=300, headers={"User-Agent": "Mozilla/5.0"}).content
+            if g.get(b64key):
+                return base64.b64decode(g[b64key])
+            return None
+
+        def _img(data):
+            im = Image.open(io.BytesIO(data))
             opaque = (im.mode != "RGBA") or int(np.array(im.convert("RGBA"))[:, :, 3].min()) >= 250
             if opaque:  # solid background -> strip it on the worker
                 rgb = im.convert("RGB")
@@ -319,14 +329,12 @@ print(f"  PAINT DONE {round(time.time()-t,1)}s", flush=True)
             timings["load_s"] = round(time.time() - t, 1)
 
         images = {}
-        if g.get("front_b64"):
-            images["front"] = _img(g["front_b64"])
-        if g.get("back_b64"):
-            images["back"] = _img(g["back_b64"])
-        if g.get("left_b64"):
-            images["left"] = _img(g["left_b64"])
+        for _view in ("front", "back", "left"):
+            _data = _fetch(f"{_view}_b64", f"{_view}_url")
+            if _data:
+                images[_view] = _img(_data)
         if not images:
-            return {"error": "provide front_b64 (+ optional back_b64/left_b64)"}
+            return {"error": "provide front_b64/front_url (+ optional back/left)"}
 
         t = time.time()
         mesh = shape_pipe(image=images, num_inference_steps=steps, octree_resolution=octree,

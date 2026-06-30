@@ -6,8 +6,55 @@ import { FACTION_THEME, RARITY_THEME } from "@/lib/theme";
 import { FactionBadge } from "./FactionBadge";
 import { RoleBadge } from "./RoleBadge";
 import { RarityGem } from "./RarityBadge";
-import { StatPip } from "./StatPip";
 import ModelViewer from "./ModelViewer";
+
+// Each stat reads by its ICON first (energy/attack/health), grouped together so
+// you can see all three at a glance.
+const STAT_META = {
+  cost: { color: "#FFD447", label: "Energy cost", icon: "M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z" },
+  attack: { color: "#FF8A00", label: "Attack", icon: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" },
+  health: { color: "#46D39A", label: "Health", icon: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" },
+} as const;
+
+function StatBar({ cost, attack, health, size }: { cost: number; attack: number; health: number; size: Size }) {
+  const big = size === "lg";
+  const compact = size === "sm";
+  const entries = [["cost", cost], ["attack", attack], ["health", health]] as const;
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {entries.map(([kind, value]) => {
+        const m = STAT_META[kind];
+        return (
+          <div
+            key={kind}
+            title={`${m.label}: ${value}`}
+            className={`flex items-center justify-center gap-1.5 rounded-md ${big ? "py-1.5" : "py-1"}`}
+            style={{ background: `${m.color}1a`, boxShadow: `inset 0 0 0 1px ${m.color}66` }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className={big ? "h-[18px] w-[18px]" : compact ? "h-3 w-3" : "h-3.5 w-3.5"}
+              fill="none"
+              stroke={m.color}
+              strokeWidth={2.2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d={m.icon} />
+            </svg>
+            <span
+              className={`font-display font-black leading-none text-white ${big ? "text-2xl" : compact ? "text-sm" : "text-lg"}`}
+              style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
+            >
+              {value}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export type CardFrameData = {
   name: string;
@@ -52,7 +99,9 @@ export default function CardFrame({
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
 
   function onMove(e: React.MouseEvent) {
-    if (show3d) return; // let the model-viewer own pointer
+    // Tilt the whole card like holding it in your hand. Works over the 3D model
+    // too (the model-viewer is display-only / pointer-events none). Clamped small
+    // so the back of the card never shows.
     const el = ref.current;
     if (!el) return;
     const b = el.getBoundingClientRect();
@@ -110,14 +159,8 @@ export default function CardFrame({
 
           {/* ---------- Header ---------- */}
           <div className="relative z-10 flex items-start justify-between gap-2 px-3 pt-3">
-            {/* Cost gem top-left */}
-            <StatPip kind="cost" value={card.cost} size={compact ? "sm" : size === "lg" ? "lg" : "md"} />
-            <div className="flex flex-col items-end gap-1.5">
-              <FactionBadge faction={card.faction} showName={!compact} />
-              <div className="flex items-center gap-1.5">
-                <RoleBadge role={card.role} />
-              </div>
-            </div>
+            <FactionBadge faction={card.faction} showName={!compact} />
+            <RoleBadge role={card.role} />
           </div>
 
           {/* ---------- Art / 3D area ---------- */}
@@ -207,11 +250,9 @@ export default function CardFrame({
             </div>
           )}
 
-          {/* ---------- Stats footer (attack bottom-left, health bottom-right) ---------- */}
-          <div className="relative z-10 flex items-end justify-between px-3 pb-3 pt-2">
-            <StatPip kind="attack" value={card.attack} size={compact ? "sm" : size === "lg" ? "lg" : "md"} />
-            {compact && <RarityGem rarity={card.rarity} />}
-            <StatPip kind="health" value={card.health} size={compact ? "sm" : size === "lg" ? "lg" : "md"} />
+          {/* ---------- Stats footer: energy cost / attack / health, grouped with icons ---------- */}
+          <div className="relative z-10 px-3 pb-3 pt-2">
+            <StatBar cost={card.cost} attack={card.attack} health={card.health} size={size} />
           </div>
         </div>
       </div>

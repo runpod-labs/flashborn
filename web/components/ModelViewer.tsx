@@ -89,11 +89,12 @@ export default function ModelViewer({
         <model-viewer
           src={src}
           poster={poster}
-          alt="Interactive 3D collectible"
-          camera-controls
-          auto-rotate
-          rotation-per-second="18deg"
-          auto-rotate-delay="0"
+          alt="3D collectible"
+          camera-orbit="0deg 80deg 105%"
+          field-of-view="32deg"
+          disable-zoom
+          disable-pan
+          disable-tap
           shadow-intensity="1"
           exposure="1.05"
           interaction-prompt="none"
@@ -103,6 +104,9 @@ export default function ModelViewer({
             width: "100%",
             height: "100%",
             background: "transparent",
+            // display-only: the character stays put (no spin / no orbit to the
+            // back). The parent CardFrame provides the in-hand tilt instead.
+            pointerEvents: "none",
             "--poster-color": "transparent",
           } as React.CSSProperties}
         />

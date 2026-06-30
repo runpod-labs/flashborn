@@ -53,6 +53,21 @@ export const listProjects = query({
   },
 });
 
+// All names currently in use — in-flight project working titles plus published
+// card names. Used by the New Character page to flag taken names.
+export const existingNames = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const projects = await ctx.db.query("generationProjects").collect();
+    const cards = await ctx.db.query("cardDefinitions").collect();
+    return [
+      ...projects.map((p) => p.workingTitle),
+      ...cards.map((c) => c.name),
+    ];
+  },
+});
+
 export const getProject = query({
   args: { id: v.id("generationProjects") },
   handler: async (ctx, { id }) => {

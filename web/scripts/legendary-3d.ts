@@ -13,6 +13,15 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { STARTER_SET, FACTION_DEFS } from "@flashborn/shared";
 import { buildConceptPrompt, buildMultiviewPrompt } from "../lib/prompt";
+import sharp from "sharp";
+
+// Hunyuan3D MV doesn't need high input res (texture quality comes from the
+// diffusion, not pixel count). Downscale each view so the 3 base64 images stay
+// well under Flash's 10MB request limit (full-res 768x1024 PNGs blow past it).
+async function shrinkB64(buf: Buffer): Promise<string> {
+  const out = await sharp(buf).resize({ width: 512 }).png({ compressionLevel: 9 }).toBuffer();
+  return out.toString("base64");
+}
 
 function env(key: string): string {
   const file = path.join(__dirname, "..", ".env.local");
@@ -39,7 +48,9 @@ async function genImage(prompt: string, seed: number, refB64?: string): Promise<
   return Buffer.from(o.image_b64, "base64");
 }
 
-async function infer3D(front: string, left: string, back: string): Promise<Buffer> {
+async function infer3D(frontUrl: string, leftUrl: string, backUrl: string): Promise<Buffer> {
+  // Pass Convex storage URLs; the worker downloads them (tiny request, full res,
+  // no 10MB base64 cap).
   const res = await fetch(`${TD}/hunyuan3d_worker/runsync`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -51,9 +62,9 @@ async function infer3D(front: string, left: string, back: string): Promise<Buffe
           octree_resolution: 256,
           num_inference_steps: 30,
           max_facenum: 40000,
-          front_b64: front,
-          left_b64: left,
-          back_b64: back,
+          front_url: frontUrl,
+          left_url: leftUrl,
+          back_url: backUrl,
         },
       },
     }),
@@ -121,7 +132,12 @@ async function main() {
 
       // 3) 3D
       const modelId = (await client.mutation(api.dev.createModel, { projectId: projectId as any, multiviewSet: setId as any })) as string;
-      const glb = await infer3D(views.front.toString("base64"), views.left.toString("base64"), views.back.toString("base64"));
+      const [fUrl, lUrl, bUrl] = await Promise.all([
+        client.query(api.files.getUrl, { storageId: fSid as any }),
+        client.query(api.files.getUrl, { storageId: lSid as any }),
+        client.query(api.files.getUrl, { storageId: bSid as any }),
+      ]);
+      const glb = await infer3D(fUrl!, lUrl!, bUrl!);
       fs.writeFileSync(path.join(scratch, `${card.slug}.glb`), glb);
       const glbSid = await upload(glb, "model/gltf-binary");
       await client.mutation(api.dev.updateModel, { id: modelId as any, status: "completed", modelStorageId: glbSid as any });

@@ -63,12 +63,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const [front, back, left] = await Promise.all([
-      urlToBase64(frontUrl),
-      urlToBase64(backUrl),
-      urlToBase64(leftUrl),
-    ]);
-
     modelId = await convex.mutation(api.dev.createModel, {
       projectId,
       multiviewSet: multiviewSetId,
@@ -79,6 +73,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // 3D infer is slow (30-120s warm, longer cold). No client timeout.
+      // Pass Convex storage URLs; the worker downloads them (no 10MB base64 cap).
       body: JSON.stringify({
         input: {
           input_data: {
@@ -87,9 +82,9 @@ export async function POST(req: Request) {
             octree_resolution: 256,
             num_inference_steps: 30,
             max_facenum: 40000,
-            front_b64: front,
-            back_b64: back,
-            left_b64: left,
+            front_url: frontUrl,
+            back_url: backUrl,
+            left_url: leftUrl,
           },
         },
       }),
