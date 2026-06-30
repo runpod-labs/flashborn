@@ -7,7 +7,6 @@ import { FactionBadge } from "./FactionBadge";
 import { RoleBadge } from "./RoleBadge";
 import { KindBadge } from "./KindBadge";
 import { RarityGem } from "./RarityBadge";
-import ModelViewer from "./ModelViewer";
 
 // Each stat reads by its ICON first (energy/attack/health), grouped together so
 // you can see all three at a glance.
@@ -103,16 +102,15 @@ const SIZE_W: Record<Size, string> = {
 export default function CardFrame({
   card,
   size = "md",
-  interactive3d = false,
 }: {
   card: CardFrameData;
   size?: Size;
+  // Accepted for call-site compatibility; cards are artwork-only now (no 3D).
   interactive3d?: boolean;
 }) {
   const f = FACTION_THEME[card.faction];
   const r = RARITY_THEME[card.rarity];
   const isLegendary = r.holo;
-  const show3d = interactive3d && !!card.modelUrl;
   const compact = size === "sm";
   const kind = card.kind ?? "character";
   const isCharacter = kind === "character";
@@ -203,18 +201,7 @@ export default function CardFrame({
                 background: `linear-gradient(180deg, ${f.dark}, #05070d)`,
               }}
             />
-            {show3d ? (
-              <ModelViewer
-                src={card.modelUrl!}
-                poster={card.artworkUrl ?? undefined}
-                className="rounded-lg"
-                // Orbit the real model in sync with the card tilt so it shows
-                // true 3D depth instead of a flat skewed image. Both axes negated
-                // so the model turns the SAME way as the card (right→right, up→up).
-                yaw={-rot.ry * 0.9}
-                pitch={-rot.rx * 0.7}
-              />
-            ) : card.artworkUrl ? (
+            {card.artworkUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={card.artworkUrl}

@@ -117,6 +117,23 @@ export const dumpAssets = query({
   },
 });
 
+// Every published card's concept fingerprint — used by the generation pipeline
+// to detect repeated concepts (by name, slug, or overlapping tags) before
+// spending GPU time on a duplicate. Auth-free (CLI/pipeline use).
+export const existingConcepts = query({
+  args: {},
+  handler: async (ctx) => {
+    const cards = await ctx.db.query("cardDefinitions").collect();
+    return cards.map((c) => ({
+      slug: c.slug,
+      name: c.name,
+      faction: c.faction,
+      tags: c.tags ?? [],
+      hasArtwork: !!(c.artworkStorageId || c.artworkUrl),
+    }));
+  },
+});
+
 // Attach a generated GLB to an existing published card (for the 3D object test).
 export const setCardModel = mutation({
   args: { cardId: v.id("cardDefinitions"), modelStorageId: v.id("_storage") },
@@ -289,6 +306,8 @@ export const publishCard = mutation({
     artworkStorageId: v.optional(v.id("_storage")),
     modelStorageId: v.optional(v.id("_storage")),
     modelUrl: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    visualPrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let { artworkStorageId, modelStorageId, modelUrl } = args;
@@ -327,6 +346,8 @@ export const publishCard = mutation({
       artworkStorageId,
       modelStorageId,
       modelUrl,
+      tags: args.tags,
+      visualPrompt: args.visualPrompt,
       published: true,
     };
     let id;

@@ -1,597 +1,337 @@
 "use client";
 
+// CONCEPT — "TERMINAL" (rebuilt): a minimal, monochrome, terminal-flavored
+// card surface. The chrome is grayscale on purpose; COLOR only ever appears on
+// the cards themselves (faction identity) and a single logo glyph. Generous
+// space (Foundry-roomy) and a related-cards rail so the page reads as a place
+// to inspect, browse and collect — not a neon poster.
+
 import Link from "next/link";
 import ModelViewer from "@/components/ModelViewer";
-import { useDemoCard } from "@/app/concepts/_data";
+import { FACTION_THEME, RARITY_THEME, ROLE_LABEL } from "@/lib/theme";
+import { useDemoCard, type DemoCard } from "@/app/concepts/_data";
 
-const MONO = "var(--font-geist-mono)";
+// ---- monochrome system ----
+const BG = "#0a0a0b";
+const STAGE = "#0c0c0e";
+const LINE = "rgba(255,255,255,0.10)";
+const LINE_SOFT = "rgba(255,255,255,0.05)";
+const INK = "#ECECEE";
+const MUTE = "#8b8b93";
+const FAINT = "#62626b";
+const DIM = "#3a3a41";
+const MONO = { fontFamily: "var(--font-geist-mono)" } as const;
 
-// phosphor palette
-const BG = "#030503";
-const BG2 = "#050805";
-const GREEN = "#00FF66";
-const DIM = "#00B347";
-const SHADOW = "#073B1E";
-
-function Bracket({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const base = "pointer-events-none absolute h-3 w-3";
-  const map: Record<string, { c: string; border: string }> = {
-    tl: { c: "left-[-1px] top-[-1px]", border: "border-l border-t" },
-    tr: { c: "right-[-1px] top-[-1px]", border: "border-r border-t" },
-    bl: { c: "bottom-[-1px] left-[-1px]", border: "border-b border-l" },
-    br: { c: "bottom-[-1px] right-[-1px]", border: "border-b border-r" },
-  };
-  const m = map[pos];
-  return (
-    <span
-      aria-hidden
-      className={`${base} ${m.c} ${m.border}`}
-      style={{ borderColor: GREEN }}
-    />
-  );
-}
-
-function Panel({
-  children,
-  title,
-  className = "",
-}: {
-  children: React.ReactNode;
-  title?: string;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`relative ${className}`}
-      style={{
-        border: `1px solid ${DIM}`,
-        background: BG2,
-        boxShadow: `inset 0 0 30px rgba(7,59,30,0.5)`,
-      }}
-    >
-      <Bracket pos="tl" />
-      <Bracket pos="tr" />
-      <Bracket pos="bl" />
-      <Bracket pos="br" />
-      {title ? (
-        <div
-          className="border-b px-3 py-1.5 text-[10px] uppercase tracking-[0.32em]"
-          style={{
-            fontFamily: MONO,
-            color: GREEN,
-            borderColor: SHADOW,
-            background: "rgba(0,255,102,0.04)",
-          }}
-        >
-          {title}
-        </div>
-      ) : null}
-      {children}
-    </section>
-  );
-}
-
-function Cursor() {
-  return (
-    <span
-      aria-hidden
-      className="tm-cursor inline-block align-middle"
-      style={{
-        width: "0.55em",
-        height: "1.05em",
-        background: GREEN,
-        marginLeft: "0.15em",
-      }}
-    />
-  );
-}
-
-function Meter({
-  label,
-  value,
-  max = 12,
-}: {
-  label: string;
-  value: number;
-  max?: number;
-}) {
-  const filled = Math.max(0, Math.min(10, Math.round((value / max) * 10)));
-  const cells = Array.from({ length: 10 }, (_, i) => i < filled);
-  return (
-    <div
-      className="flex items-center gap-2 text-[12px]"
-      style={{ fontFamily: MONO, color: GREEN }}
-    >
-      <span style={{ color: DIM, width: 42, display: "inline-block" }}>
-        {label}
-      </span>
-      <span style={{ color: SHADOW }}>▐</span>
-      <span className="tracking-[0.05em]">
-        {cells.map((on, i) => (
-          <span key={i} style={{ color: on ? GREEN : SHADOW }}>
-            {on ? "█" : "░"}
-          </span>
-        ))}
-      </span>
-      <span style={{ color: SHADOW }}>▌</span>
-      <span style={{ color: GREEN }}>
-        {String(value).padStart(2, "0")}
-      </span>
-    </div>
-  );
-}
-
-function DataRow({ k, v }: { k: string; v: string }) {
-  return (
-    <div
-      className="flex items-baseline gap-2 py-0.5 text-[12px] leading-relaxed"
-      style={{ fontFamily: MONO }}
-    >
-      <span style={{ color: DIM }}>{k}</span>
-      <span
-        className="flex-1 overflow-hidden whitespace-nowrap"
-        style={{ color: SHADOW, letterSpacing: "0.15em" }}
-        aria-hidden
-      >
-        ································································
-      </span>
-      <span style={{ color: GREEN }}>{v}</span>
-    </div>
-  );
-}
-
-export default function TerminalConceptPage() {
+export default function TerminalConcept() {
   const v = useDemoCard();
 
   return (
-    <div
-      className="relative min-h-screen w-full"
-      style={{ background: BG, color: GREEN, fontFamily: MONO }}
-    >
-      {/* full-bleed background override (covers global grid) */}
+    <div className="relative min-h-screen" style={{ background: BG, color: INK }}>
+      {/* opaque neutral backdrop — covers the global blue/purple grid */}
       <div
-        aria-hidden
-        className="fixed inset-0 -z-10"
-        style={{ background: BG }}
-      />
-      {/* CRT scanlines + vignette */}
-      <div aria-hidden className="tm-scan pointer-events-none fixed inset-0 -z-10" />
-      <div aria-hidden className="tm-vignette pointer-events-none fixed inset-0 -z-10" />
-      <div aria-hidden className="tm-flicker pointer-events-none fixed inset-0 -z-10" />
-
-      {/* ===== Header: TUI menu bar ===== */}
-      <header
-        className="sticky top-0 z-20 border-b"
+        className="pointer-events-none fixed inset-0 -z-10"
         style={{
-          borderColor: DIM,
-          background: "rgba(3,5,3,0.92)",
-          backdropFilter: "blur(2px)",
+          background: `radial-gradient(110% 70% at 50% -10%, rgba(255,255,255,0.035), transparent 60%), ${BG}`,
         }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2">
-          <nav
-            className="flex flex-wrap items-center gap-1 text-[12px] uppercase tracking-[0.18em]"
-            style={{ fontFamily: MONO }}
-          >
-            <span
-              className="px-2 py-0.5"
-              style={{ background: GREEN, color: BG }}
-            >
-              flashborn
+      />
+      {/* whisper-quiet dot grid — a workspace texture, never competes with cards */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+          maskImage: "radial-gradient(120% 80% at 50% 0%, #000 30%, transparent 85%)",
+          WebkitMaskImage: "radial-gradient(120% 80% at 50% 0%, #000 30%, transparent 85%)",
+        }}
+      />
+
+      {/* ============ HEADER ============ */}
+      <header className="sticky top-0 z-30" style={{ background: "rgba(10,10,11,0.72)", backdropFilter: "blur(10px)", borderBottom: `1px solid ${LINE_SOFT}` }}>
+        <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 py-4 sm:px-10">
+          <Link href="/" className="flex items-center gap-3">
+            {/* the one logo glyph carries a hint of color */}
+            <span className="grid h-6 w-6 place-items-center" style={{ background: "#19E6C1", color: "#04140f", clipPath: "polygon(0 0,100% 0,100% 70%,70% 100%,0 100%)" }}>
+              <span className="text-[11px] font-black">F</span>
             </span>
-            <span style={{ color: SHADOW }}>▸</span>
-            <span style={{ color: DIM }}>explore</span>
-            <span style={{ color: SHADOW }}>▸</span>
-            <span style={{ color: DIM }}>collection</span>
-            <span style={{ color: SHADOW }}>▸</span>
-            <span style={{ color: DIM }}>packs</span>
-          </nav>
-          <Link
-            href="/concepts"
-            className="text-[11px] uppercase tracking-[0.2em] transition-colors"
-            style={{ color: GREEN }}
-          >
-            [ ←&nbsp;cd&nbsp;../concepts ]
+            <span className="text-[13px] font-bold uppercase tracking-[0.34em]" style={{ color: INK }}>
+              Flashborn
+            </span>
           </Link>
+          <nav className="flex items-center gap-8 text-[10px] uppercase tracking-[0.28em]" style={{ ...MONO }}>
+            {["explore", "collection", "packs"].map((l, i) => (
+              <Link key={l} href={`/${l}`} className="transition-colors hover:text-white" style={{ color: i === 1 ? INK : FAINT }}>
+                {l}
+              </Link>
+            ))}
+            <span className="hidden items-center gap-1.5 sm:flex" style={{ color: FAINT }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "#5fcf8e" }} />
+              online
+            </span>
+          </nav>
         </div>
       </header>
 
-      {/* ===== Terminal window ===== */}
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        <div
-          className="relative"
-          style={{
-            border: `1px solid ${GREEN}`,
-            background: BG2,
-            boxShadow: `0 0 40px rgba(0,255,102,0.08), inset 0 0 60px rgba(7,59,30,0.4)`,
-          }}
-        >
-          {/* title bar */}
-          <div
-            className="flex items-center justify-between border-b px-3 py-2"
-            style={{ borderColor: DIM, background: "rgba(0,255,102,0.05)" }}
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block h-2.5 w-2.5"
-                style={{ border: `1px solid ${GREEN}` }}
-              />
-              <span
-                className="inline-block h-2.5 w-2.5"
-                style={{ border: `1px solid ${DIM}` }}
-              />
-              <span
-                className="inline-block h-2.5 w-2.5"
-                style={{ border: `1px solid ${SHADOW}` }}
-              />
-            </div>
-            <span
-              className="text-[11px] tracking-[0.12em]"
-              style={{ color: GREEN }}
-            >
-              card_detail.sh — root@thegrid:~
-            </span>
-            <span className="text-[12px]" style={{ color: GREEN }}>
-              [x]
-            </span>
-          </div>
+      {/* ============ COMMAND LINE ============ */}
+      <div className="mx-auto max-w-[1320px] px-6 pt-8 sm:px-10">
+        <div className="flex items-center gap-2 text-[12px]" style={{ ...MONO, color: FAINT }}>
+          <span style={{ color: DIM }}>flashborn@grid</span>
+          <span style={{ color: DIM }}>~</span>
+          <span style={{ color: MUTE }}>
+            inspect --card {v.card?.slug ?? "…"}
+          </span>
+          <span className="tm-caret inline-block h-[14px] w-[7px]" style={{ background: MUTE }} />
+        </div>
+      </div>
 
-          {/* prompt line */}
-          <div
-            className="border-b px-4 py-3 text-[12px]"
-            style={{ borderColor: SHADOW }}
-          >
-            <span style={{ color: DIM }}>root@thegrid</span>
-            <span style={{ color: SHADOW }}>:</span>
-            <span style={{ color: GREEN }}>~$ </span>
-            <span style={{ color: GREEN }}>
-              query --card {v.card?.slug ?? "<none>"} --view detail
-            </span>
-            <Cursor />
-          </div>
+      {/* ============ STATES ============ */}
+      {v.loading && (
+        <div className="mx-auto max-w-[1320px] px-6 py-40 text-center sm:px-10">
+          <span className="text-[11px] uppercase tracking-[0.4em]" style={{ ...MONO, color: FAINT }}>
+            resolving collectible
+            <span className="tm-caret">_</span>
+          </span>
+        </div>
+      )}
 
-          {/* body */}
-          <div className="p-4 md:p-6">
-            {v.loading ? (
-              <Loading />
-            ) : !v.card ? (
-              <Empty />
-            ) : (
-              <Body v={v} />
-            )}
-          </div>
-
-          {/* footer / status line */}
-          <div
-            className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2 text-[10px] uppercase tracking-[0.2em]"
-            style={{ borderColor: DIM, color: DIM }}
-          >
-            <span>
-              <span style={{ color: GREEN }}>●</span> powered by Runpod Flash
-            </span>
-            <span>exit 0 — pipeline: concept ▸ multiview ▸ glb ▸ published</span>
+      {!v.loading && !v.card && (
+        <div className="mx-auto max-w-[1320px] px-6 py-40 sm:px-10">
+          <div className="border p-12" style={{ borderColor: LINE }}>
+            <p className="text-[11px] uppercase tracking-[0.4em]" style={{ ...MONO, color: FAINT }}>
+              no published cards
+            </p>
+            <p className="mt-3 text-2xl" style={{ color: INK }}>The grid is empty.</p>
           </div>
         </div>
-      </main>
+      )}
 
+      {/* ============ CONTENT ============ */}
+      {!v.loading && v.card && (
+        <Body v={v} />
+      )}
+
+      {/* keyframes — plain <style> (styled-jsx breaks hydration under reactCompiler) */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes tm-blink {
-          0%,
-          49% {
-            opacity: 1;
-          }
-          50%,
-          100% {
-            opacity: 0;
-          }
-        }
-        .tm-cursor {
-          animation: tm-blink 1s steps(1) infinite;
-        }
-        .tm-scan {
-          background: repeating-linear-gradient(
-            to bottom,
-            rgba(0, 255, 102, 0.05) 0px,
-            rgba(0, 255, 102, 0.05) 1px,
-            transparent 1px,
-            transparent 3px
-          );
-          mix-blend-mode: screen;
-        }
-        .tm-vignette {
-          background: radial-gradient(
-            ellipse at center,
-            transparent 55%,
-            rgba(0, 0, 0, 0.55) 100%
-          );
-        }
-        @keyframes tm-flick {
-          0%,
-          97%,
-          100% {
-            opacity: 0;
-          }
-          98% {
-            opacity: 0.04;
-          }
-          99% {
-            opacity: 0.02;
-          }
-        }
-        .tm-flicker {
-          background: ${GREEN};
-          animation: tm-flick 6s infinite;
-          mix-blend-mode: screen;
-        }
+        @keyframes tm-blink { 0%,55% { opacity: 1 } 56%,100% { opacity: 0 } }
+        .tm-caret { animation: tm-blink 1.1s steps(1) infinite; }
       ` }} />
-    </div>
-  );
-}
-
-function Loading() {
-  return (
-    <div
-      className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-[13px]"
-      style={{ fontFamily: MONO, color: DIM }}
-    >
-      <div style={{ color: GREEN }}>
-        $ fetching record
-        <Cursor />
-      </div>
-      <div style={{ color: SHADOW }}>
-        ▐███████░░░░░░░░░▌ establishing uplink...
-      </div>
-    </div>
-  );
-}
-
-function Empty() {
-  return (
-    <div
-      className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-center text-[13px]"
-      style={{ fontFamily: MONO }}
-    >
-      <div style={{ color: GREEN }}># ERR_NO_RECORD</div>
-      <div style={{ color: DIM }}>No published cards yet.</div>
-      <div style={{ color: SHADOW }}>
-        $ forge --publish &lt;card&gt; # then retry
-      </div>
     </div>
   );
 }
 
 function Body({ v }: { v: ReturnType<typeof useDemoCard> }) {
   const card = v.card!;
-  const label = v.isCharacter ? v.roleLabel : v.kindLabel;
+  const faction = v.faction;
 
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
-      {/* ===== LEFT: render viewport ===== */}
-      <div className="flex flex-col gap-5">
-        <Panel title="[ render :: model.glb ]">
-          <div
-            className="relative aspect-square w-full"
-            style={{ background: BG }}
-          >
-            {/* corner ticks inside viewport */}
-            <span
-              aria-hidden
-              className="absolute left-2 top-2 text-[10px]"
-              style={{ color: SHADOW, fontFamily: MONO }}
-            >
-              +
-            </span>
-            <span
-              aria-hidden
-              className="absolute right-2 top-2 text-[10px]"
-              style={{ color: SHADOW, fontFamily: MONO }}
-            >
-              +
-            </span>
-            <span
-              aria-hidden
-              className="absolute bottom-2 left-2 text-[10px]"
-              style={{ color: SHADOW, fontFamily: MONO }}
-            >
-              +
-            </span>
-            <span
-              aria-hidden
-              className="absolute bottom-2 right-2 text-[10px]"
-              style={{ color: SHADOW, fontFamily: MONO }}
-            >
-              +
-            </span>
-            {card.modelUrl ? (
-              <ModelViewer
-                src={card.modelUrl}
-                poster={card.artworkUrl ?? undefined}
-              />
-            ) : card.artworkUrl ? (
-              <img
-                src={card.artworkUrl}
-                alt={card.name}
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{ filter: "grayscale(1) sepia(1) hue-rotate(70deg) saturate(3) brightness(0.8)" }}
-              />
-            ) : (
-              <div
-                className="absolute inset-0 flex items-center justify-center text-[12px]"
-                style={{ color: SHADOW, fontFamily: MONO }}
-              >
-                [ no asset :: render buffer empty ]
-              </div>
-            )}
-            {/* viewport readout */}
+    <>
+      <main className="mx-auto max-w-[1320px] px-6 pb-20 pt-7 sm:px-10">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+          {/* ---------- HERO STAGE (the only place with color) ---------- */}
+          <section>
             <div
-              className="absolute bottom-0 left-0 right-0 flex justify-between px-2 py-1 text-[9px] uppercase tracking-[0.2em]"
-              style={{
-                color: DIM,
-                fontFamily: MONO,
-                background: "rgba(3,5,3,0.7)",
-                borderTop: `1px solid ${SHADOW}`,
-              }}
+              className="relative w-full overflow-hidden"
+              style={{ aspectRatio: "4 / 5", background: STAGE, border: `1px solid ${LINE}` }}
             >
-              <span>fps: 60</span>
-              <span>{card.modelUrl ? "mode: glb/orbit" : "mode: still"}</span>
-              <span>tex: pbr</span>
-            </div>
-          </div>
-        </Panel>
-
-        {/* classification tags */}
-        <Panel title="[ classify ]">
-          <div className="space-y-1 px-3 py-3">
-            <DataRow k="faction" v={v.faction.name} />
-            <DataRow k="rarity " v={v.rarity.name} />
-            <DataRow k="class  " v={label} />
-            <div
-              className="mt-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em]"
-              style={{ color: SHADOW, fontFamily: MONO }}
-            >
-              <span>faction.hex</span>
-              <span
-                className="inline-block h-2.5 w-2.5"
-                style={{ background: v.faction.primary, border: `1px solid ${SHADOW}` }}
+              {/* soft faction glow — the card's identity, kept subtle */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: `radial-gradient(58% 55% at 50% 42%, ${faction.primary}26, transparent 72%)` }}
               />
-              <span style={{ color: DIM }}>{v.faction.primary}</span>
-            </div>
-          </div>
-        </Panel>
-      </div>
-
-      {/* ===== RIGHT: data ===== */}
-      <div className="flex flex-col gap-5">
-        {/* name header */}
-        <div>
-          <div
-            className="mb-1 text-[11px] uppercase tracking-[0.3em]"
-            style={{ color: DIM }}
-          >
-            $ cat ./name.txt
-          </div>
-          <h1
-            className="break-words text-3xl font-bold uppercase leading-none tracking-[0.08em] md:text-4xl"
-            style={{
-              color: GREEN,
-              fontFamily: MONO,
-              textShadow: `0 0 12px rgba(0,255,102,0.45)`,
-            }}
-          >
-            {card.name}
-          </h1>
-          <div
-            className="mt-2 text-[12px]"
-            style={{ color: DIM }}
-          >
-            {v.faction.name} / {v.rarity.name} / {label}
-            <Cursor />
-          </div>
-        </div>
-
-        {/* stats */}
-        <Panel title="[ stats ]">
-          <div className="space-y-2 px-3 py-3">
-            <div
-              className="flex items-center gap-2 text-[13px]"
-              style={{ fontFamily: MONO, color: GREEN }}
-            >
-              <span style={{ color: DIM, width: 42, display: "inline-block" }}>
-                COST
-              </span>
-              <span style={{ color: SHADOW }}>[</span>
-              <span>{String(card.cost).padStart(2, "0")}</span>
-              <span style={{ color: SHADOW }}>]</span>
-            </div>
-            {v.isCharacter ? (
-              <>
-                <Meter label="ATK" value={card.attack ?? 0} />
-                <Meter label="HP " value={card.health ?? 0} />
-              </>
-            ) : (
-              <div
-                className="text-[11px] uppercase tracking-[0.2em]"
-                style={{ color: SHADOW, fontFamily: MONO }}
-              >
-                # non-combat unit — cost only
+              {/* top read-out row */}
+              <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.25em]" style={{ ...MONO, color: FAINT }}>
+                <span>model.glb · 3d</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: card.modelUrl ? "#5fcf8e" : DIM }} />
+                  {card.modelUrl ? "live" : "static"}
+                </span>
               </div>
-            )}
-          </div>
-        </Panel>
 
-        {/* keyword */}
-        {v.keyword ? (
-          <Panel title="[ keyword ]">
-            <div className="px-3 py-3">
-              <div
-                className="mb-1 text-[13px] uppercase tracking-[0.16em]"
-                style={{ color: GREEN }}
-              >
-                &gt; {v.keyword.name}
+              <div className="absolute inset-0">
+                {card.modelUrl ? (
+                  <ModelViewer src={card.modelUrl} poster={card.artworkUrl ?? undefined} />
+                ) : card.artworkUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={card.artworkUrl} alt={card.name} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-[11px] uppercase tracking-[0.3em]" style={{ ...MONO, color: DIM }}>
+                    no asset
+                  </div>
+                )}
               </div>
-              <p
-                className="text-[12px] leading-relaxed"
-                style={{ color: DIM }}
-              >
-                {v.keyword.text}
-              </p>
+
+              {/* bottom faction strip */}
+              <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-between px-4 py-3 text-[10px] uppercase tracking-[0.25em]" style={{ ...MONO, color: MUTE }}>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2" style={{ background: faction.primary }} />
+                  {faction.name}
+                </span>
+                <span style={{ color: FAINT }}>{v.prov.serial} / {v.prov.edition}</span>
+              </div>
             </div>
-          </Panel>
-        ) : null}
+            {/* one faction-colored baseline tick — meaningful, not decorative */}
+            <div className="mt-px h-[2px] w-full" style={{ background: `linear-gradient(90deg, ${faction.primary}, transparent 55%)` }} />
 
-        {/* ability */}
-        <Panel title="[ ability ]">
-          <div className="px-3 py-3">
-            {card.abilityTitle ? (
-              <div
-                className="mb-1 text-[13px] uppercase tracking-[0.16em]"
-                style={{ color: GREEN }}
-              >
-                &gt; {card.abilityTitle}
-              </div>
-            ) : null}
-            <p
-              className="text-[12px] leading-relaxed"
-              style={{ color: DIM }}
-            >
-              {card.abilityText || "No combat ability."}
+            <p className="mt-4 text-[11px] leading-relaxed" style={{ ...MONO, color: FAINT }}>
+              {"// "}drag to rotate · reconstructed from multiview · powered by Runpod Flash
             </p>
-          </div>
-        </Panel>
+          </section>
 
-        {/* lore */}
-        {card.lore ? (
-          <Panel title="[ lore :: //flavor ]">
-            <div className="px-3 py-3">
-              <p
-                className="text-[12px] italic leading-relaxed"
-                style={{ color: DIM }}
-              >
-                {card.lore.split("\n").map((line, i) => (
-                  <span key={i} className="block">
-                    <span style={{ color: SHADOW }}>// </span>
-                    {line}
-                  </span>
-                ))}
-              </p>
+          {/* ---------- INFO (monochrome) ---------- */}
+          <section className="flex flex-col">
+            {/* kicker */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.28em]" style={{ ...MONO, color: FAINT }}>
+              <span className="flex items-center gap-1.5" style={{ color: MUTE }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: faction.primary }} />
+                {faction.name}
+              </span>
+              <span style={{ color: DIM }}>/</span>
+              <span>{v.rarity.name}</span>
+              <span style={{ color: DIM }}>/</span>
+              <span>{v.isCharacter ? v.roleLabel : v.kindLabel}</span>
             </div>
-          </Panel>
-        ) : null}
 
-        {/* provenance */}
-        <Panel title="[ provenance :: ownership.db ]">
-          <div className="space-y-0 px-3 py-3">
-            <DataRow
-              k="serial "
-              v={`#${v.prov.serial} / ${v.prov.edition}`}
-            />
-            <DataRow k="edition" v={`${v.prov.edition} units`} />
-            <DataRow k="owner  " v={`@${v.prov.owner}`} />
-            <DataRow k="acquire" v={v.prov.acquired} />
-            <DataRow k="mint   " v={v.prov.minted} />
+            {/* name */}
+            <h1 className="mt-4 text-5xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl" style={{ ...MONO, color: INK }}>
+              {card.name}
+            </h1>
+
+            {/* statline */}
+            <div className="mt-9 grid" style={{ gridTemplateColumns: v.isCharacter ? "repeat(3,1fr)" : "1fr", borderTop: `1px solid ${LINE}`, borderBottom: `1px solid ${LINE}` }}>
+              <StatCell label="Cost" value={card.cost} />
+              {v.isCharacter && <StatCell label="Attack" value={card.attack} divide />}
+              {v.isCharacter && <StatCell label="Health" value={card.health} divide />}
+            </div>
+
+            {/* ability */}
+            <div className="mt-8">
+              <Label>ability</Label>
+              {card.abilityTitle && (
+                <p className="mt-2 text-[15px] font-semibold" style={{ color: INK }}>{card.abilityTitle}</p>
+              )}
+              <p className="mt-1.5 text-[15px] leading-relaxed" style={{ color: MUTE }}>
+                {card.abilityText ?? "No combat ability."}
+              </p>
+              {v.keyword && (
+                <div className="mt-3 flex items-baseline gap-3">
+                  <span className="px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]" style={{ ...MONO, color: INK, border: `1px solid ${LINE}` }}>
+                    {v.keyword.name}
+                  </span>
+                  <span className="text-[13px]" style={{ color: FAINT }}>{v.keyword.text}</span>
+                </div>
+              )}
+            </div>
+
+            {/* lore */}
+            {card.lore && (
+              <p className="mt-6 border-l pl-4 text-[13px] italic leading-relaxed" style={{ borderColor: LINE, color: FAINT }}>
+                {card.lore}
+              </p>
+            )}
+
+            {/* provenance */}
+            <div className="mt-8">
+              <Label>provenance</Label>
+              <dl className="mt-3">
+                <Row k="serial" val={`#${v.prov.serial}`} />
+                <Row k="edition" val={`${v.prov.serialNumber} of ${v.prov.edition}`} />
+                <Row k="owner" val={v.prov.owner} />
+                <Row k="acquired" val={v.prov.acquired} />
+                <Row k="mint" val={v.prov.minted} />
+              </dl>
+            </div>
+
+            {/* actions */}
+            <div className="mt-9 flex flex-wrap gap-3">
+              <button className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors hover:bg-white hover:text-black" style={{ ...MONO, color: INK, border: `1px solid ${LINE}` }}>
+                Share
+              </button>
+              <Link href="/concepts" className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors hover:text-white" style={{ ...MONO, color: FAINT, border: `1px solid ${LINE_SOFT}` }}>
+                ← concepts
+              </Link>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      {/* ============ COLLECTION RAIL ============ */}
+      {v.others.length > 0 && (
+        <section className="mx-auto max-w-[1320px] px-6 pb-24 sm:px-10" style={{ borderTop: `1px solid ${LINE_SOFT}` }}>
+          <div className="flex items-center justify-between pt-8">
+            <Label>more from the grid</Label>
+            <Link href="/explore" className="text-[10px] uppercase tracking-[0.25em] transition-colors hover:text-white" style={{ ...MONO, color: FAINT }}>
+              view all →
+            </Link>
           </div>
-        </Panel>
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {v.others.slice(0, 6).map((o) => (
+              <Thumb key={o._id} card={o} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ============ FOOTER ============ */}
+      <footer style={{ borderTop: `1px solid ${LINE_SOFT}` }}>
+        <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 py-6 text-[10px] uppercase tracking-[0.28em] sm:px-10" style={{ ...MONO, color: DIM }}>
+          <span style={{ color: FAINT }}>Flashborn</span>
+          <span>Powered by Runpod Flash</span>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-[10px] uppercase tracking-[0.32em]" style={{ ...MONO, color: FAINT }}>
+      {"// "}{children}
+    </span>
+  );
+}
+
+function StatCell({ label, value, divide }: { label: string; value: number; divide?: boolean }) {
+  return (
+    <div className="px-5 py-5" style={divide ? { borderLeft: `1px solid ${LINE}` } : undefined}>
+      <div className="text-[9px] uppercase tracking-[0.3em]" style={{ ...MONO, color: FAINT }}>{label}</div>
+      <div className="mt-1.5 text-4xl font-bold tabular-nums" style={{ ...MONO, color: INK }}>
+        {String(value).padStart(2, "0")}
       </div>
     </div>
+  );
+}
+
+function Row({ k, val }: { k: string; val: string }) {
+  return (
+    <div className="flex items-center gap-3 py-2" style={{ borderBottom: `1px solid ${LINE_SOFT}` }}>
+      <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.22em]" style={{ ...MONO, color: FAINT }}>{k}</dt>
+      <span className="h-px flex-1" style={{ background: `repeating-linear-gradient(90deg, ${DIM} 0 2px, transparent 2px 5px)` }} />
+      <dd className="text-[12px]" style={{ ...MONO, color: INK }}>{val}</dd>
+    </div>
+  );
+}
+
+function Thumb({ card }: { card: DemoCard }) {
+  const fc = FACTION_THEME[card.faction].primary;
+  const rarity = RARITY_THEME[card.rarity].name;
+  return (
+    <Link href={`/c/${card.slug}`} className="group block">
+      <div className="relative overflow-hidden" style={{ aspectRatio: "3 / 4", background: STAGE, border: `1px solid ${LINE}` }}>
+        {card.artworkUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={card.artworkUrl} alt={card.name} className="absolute inset-0 h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100" draggable={false} />
+        ) : (
+          <div className="absolute inset-0" style={{ background: `radial-gradient(70% 60% at 50% 40%, ${fc}22, transparent 70%)` }} />
+        )}
+        {/* faction tick — the meaningful color */}
+        <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: fc }} />
+      </div>
+      <div className="mt-2 flex items-center gap-1.5">
+        <span className="h-1.5 w-1.5 shrink-0" style={{ background: fc }} />
+        <span className="truncate text-[11px] font-semibold uppercase tracking-wide" style={{ color: INK }}>{card.name}</span>
+      </div>
+      <div className="text-[9px] uppercase tracking-[0.25em]" style={{ ...MONO, color: FAINT }}>
+        {rarity} · {ROLE_LABEL[card.role]}
+      </div>
+    </Link>
   );
 }

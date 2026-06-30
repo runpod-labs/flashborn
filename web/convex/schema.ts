@@ -160,6 +160,10 @@ export default defineSchema({
     artworkUrl: v.optional(v.string()),
     modelStorageId: v.optional(v.id("_storage")),
     modelUrl: v.optional(v.string()),
+    // Concept de-dup: tags + the visual brief used, so the generation pipeline
+    // can detect and avoid repeating the same concepts across runs.
+    tags: v.optional(v.array(v.string())),
+    visualPrompt: v.optional(v.string()),
     published: v.boolean(),
     createdAt: v.number(),
   })

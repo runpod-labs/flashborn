@@ -242,7 +242,9 @@ export default async function PublicCardPage({
   const { card, serialNumber, acquiredAt, ownerName } = owned;
   const faction = FACTION_THEME[card.faction];
   const rarity = RARITY_THEME[card.rarity];
-  const has3d = !!card.modelUrl;
+  // Cards are artwork-only now — 3D is reserved for site assets (logos), not
+  // card hero display. Always render the full-art CardFrame.
+  const has3d = false;
   const keyword = card.keyword as KeywordId | null | undefined;
   const keywordDef = keyword ? KEYWORD_DEFS[keyword] : null;
 
