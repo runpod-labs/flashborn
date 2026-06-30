@@ -121,9 +121,11 @@ export default function CardFrame({
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
 
   function onMove(e: React.MouseEvent) {
-    // Tilt the whole card like holding it in your hand. Works over the 3D model
-    // too (the model-viewer is display-only / pointer-events none). Clamped small
-    // so the back of the card never shows.
+    // In-hand tilt for 2D cards only. A 3D card is NOT tilted: the model-viewer
+    // lives on the card surface, so any rotateX/rotateY would reproject the
+    // model and change its perspective — exactly what we must avoid. So 3D
+    // cards stay flat and the model perspective is locked.
+    if (show3d) return;
     const el = ref.current;
     if (!el) return;
     const b = el.getBoundingClientRect();
@@ -217,11 +219,8 @@ export default function CardFrame({
                 </div>
               </div>
             )}
-            {/* scanline + holo sheen */}
+            {/* subtle scanline only — no moving shine over the art / 3D model */}
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.18)_50%)] bg-[length:100%_3px] opacity-30" />
-            {isLegendary && (
-              <div className="holo-trim pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-color-dodge" />
-            )}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
           </div>
 

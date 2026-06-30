@@ -45,6 +45,12 @@ function NewCharacterForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seed, setSeed] = useState(0);
+  const [stay, setStay] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [batchCount, setBatchCount] = useState(10);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
 
   // Lowercased set of every name already in use (projects + published cards).
   const taken = useMemo(
@@ -80,14 +86,16 @@ function NewCharacterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     if (!workingTitle.trim() || !character.trim()) {
       setError("Working title and character description are required.");
       return;
     }
     setBusy(true);
     try {
+      const name = workingTitle.trim();
       const id = await createProject({
-        workingTitle: workingTitle.trim(),
+        workingTitle: name,
         originalPrompt: character.trim(),
         extraInstructions: extra.trim() || undefined,
         faction,
@@ -96,7 +104,7 @@ function NewCharacterForm() {
       });
 
       // Kick off the first concept batch (best-effort — the pipeline page can
-      // re-run it if this fails).
+      // re-run it if this fails). This is a blocking GPU call.
       try {
         await fetch("/api/forge/concept", {
           method: "POST",
@@ -115,9 +123,48 @@ function NewCharacterForm() {
         // ignore — handled on the pipeline page
       }
 
-      router.push(`/forge/${id}`);
+      if (stay) {
+        // Stay on the page and line up the next one.
+        setNotice(`Created “${name}” — concepts generating. Ready for the next.`);
+        rollEverything();
+        setBusy(false);
+      } else {
+        router.push(`/forge/${id}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create project.");
+      setBusy(false);
+    }
+  }
+
+  // Bulk: create N random characters as drafts instantly (no concept
+  // generation — that's a slow GPU call you run per-card afterward).
+  async function handleBatch() {
+    setError(null);
+    setNotice(null);
+    const total = Math.max(1, Math.min(50, batchCount));
+    setBusy(true);
+    setProgress({ done: 0, total });
+    // Avoid colliding with existing names and names made earlier this run.
+    const used = new Set(taken);
+    try {
+      for (let i = 0; i < total; i++) {
+        const rc = randomCharacter(used);
+        used.add(rc.workingTitle.toLowerCase());
+        await createProject({
+          workingTitle: rc.workingTitle,
+          originalPrompt: rc.character,
+          extraInstructions: rc.extra || undefined,
+          faction: rc.faction,
+          role: rc.role,
+          rarity: rc.rarity,
+        });
+        setProgress({ done: i + 1, total });
+      }
+      setNotice(`Created ${total} draft characters. Generate concepts from each card's Forge page.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Batch create failed.");
+    } finally {
       setBusy(false);
     }
   }
@@ -293,11 +340,75 @@ function NewCharacterForm() {
               {error}
             </div>
           )}
+          {notice && !error && (
+            <div className="rounded-md border border-neon/40 bg-neon/10 px-3 py-2 text-xs text-neon">
+              {notice}
+            </div>
+          )}
+
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+            <input
+              type="checkbox"
+              checked={stay}
+              onChange={(e) => setStay(e.target.checked)}
+              className="h-4 w-4 accent-neon"
+            />
+            Create &amp; stay — keep this form open and re-roll for the next one
+            instead of jumping to the pipeline.
+          </label>
 
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
             {busy ? "Forging…" : `Create & generate ${count} concepts`}
           </Button>
         </form>
+
+        {/* Bulk draft creation */}
+        <div className="mt-6 rounded-2xl panel p-6">
+          <h2 className="font-display text-sm font-bold uppercase tracking-widest text-grid-fg">
+            Batch <span className="text-neon">create</span>
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            Instantly create random on-brand draft characters — no concept
+            generation. Generate concepts later from each character&apos;s Forge
+            page. Great for filling out the roster fast.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <div className="w-28">
+              <label className={LABEL_CLS}>How many</label>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                className={INPUT_CLS}
+                value={batchCount}
+                onChange={(e) =>
+                  setBatchCount(Math.max(1, Math.min(50, Number(e.target.value) || 1)))
+                }
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={handleBatch}
+              disabled={busy}
+            >
+              {busy && progress
+                ? `Creating ${progress.done}/${progress.total}…`
+                : `🎲 Roll & create ${Math.max(1, Math.min(50, batchCount))} drafts`}
+            </Button>
+          </div>
+
+          {progress && (
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface ring-1 ring-edge">
+              <div
+                className="h-full bg-gradient-to-r from-neon to-neon-2 transition-all"
+                style={{ width: `${(progress.done / progress.total) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <ExistingCharacters projects={projects} />

@@ -42,6 +42,81 @@ export const listProjectsBasic = query({
   },
 });
 
+// Dump every asset URL in the generation chain for a character, by name
+// substring (case-insensitive). Shows the multiview images fed into the 3D
+// worker and the resulting GLB so you can inspect quality. Auth-free (CLI use).
+export const dumpAssets = query({
+  args: { name: v.string() },
+  handler: async (ctx, { name }) => {
+    const needle = name.toLowerCase();
+    const url = async (id?: any) => (id ? await ctx.storage.getUrl(id) : null);
+
+    const projects = (await ctx.db.query("generationProjects").collect()).filter((p) =>
+      p.workingTitle.toLowerCase().includes(needle),
+    );
+
+    const out = [];
+    for (const p of projects) {
+      // selected concept (falls back to first candidate)
+      let candId = p.selectedCandidate;
+      if (!candId) {
+        const first = await ctx.db
+          .query("imageCandidates")
+          .withIndex("by_project", (q) => q.eq("projectId", p._id))
+          .first();
+        candId = first?._id;
+      }
+      const cand = candId ? await ctx.db.get(candId) : null;
+
+      // multiview set (selected, else latest)
+      let mv = p.selectedMultiview ? await ctx.db.get(p.selectedMultiview) : null;
+      if (!mv) {
+        mv = await ctx.db
+          .query("multiviewSets")
+          .withIndex("by_project", (q) => q.eq("projectId", p._id))
+          .order("desc")
+          .first();
+      }
+
+      // model (selected, else latest)
+      let model = p.selectedModel ? await ctx.db.get(p.selectedModel) : null;
+      if (!model) {
+        model = await ctx.db
+          .query("generatedModels")
+          .withIndex("by_project", (q) => q.eq("projectId", p._id))
+          .order("desc")
+          .first();
+      }
+
+      out.push({
+        project: p.workingTitle,
+        projectId: p._id,
+        stage: p.stage,
+        concept: cand ? { url: await url(cand.storageId), seed: cand.seed } : null,
+        multiview: mv
+          ? {
+              status: mv.status,
+              front: await url(mv.frontStorageId),
+              left: await url(mv.leftStorageId),
+              right: await url(mv.rightStorageId),
+              back: await url(mv.backStorageId),
+              metadata: mv.metadata,
+            }
+          : null,
+        model: model
+          ? {
+              status: model.status,
+              glb: model.modelStorageId ? await url(model.modelStorageId) : model.modelUrl,
+              preview: await url(model.previewStorageId),
+              metadata: model.metadata,
+            }
+          : null,
+      });
+    }
+    return out;
+  },
+});
+
 function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }

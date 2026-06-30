@@ -306,16 +306,13 @@ export default async function PublicCardPage({
                     boxShadow: `inset 0 0 0 2px ${faction.primary}, inset 0 0 40px -8px ${faction.glow}, 0 24px 60px -24px ${faction.glow}`,
                   }}
                 >
-                  {rarity.holo && (
-                    <div className="holo-trim pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-color-dodge" />
-                  )}
                   <ModelViewer
                     src={card.modelUrl!}
                     poster={card.artworkUrl ?? undefined}
                   />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center pb-3">
                     <span className="rounded-full bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-grid-fg/70 backdrop-blur-sm">
-                      Drag to rotate
+                      3D collectible
                     </span>
                   </div>
                 </div>

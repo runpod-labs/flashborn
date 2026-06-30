@@ -145,7 +145,7 @@ body {
   text-shadow: 0 0 10px var(--fx-glow, rgba(25, 230, 193, 0.55));
 }
 
-/* Holographic legendary trim. Apply to a border/overlay element. */
+/* Holographic legendary trim. Static gradient — no moving shimmer. */
 @utility holo-trim {
   background: linear-gradient(
     110deg,
@@ -156,14 +156,12 @@ body {
     #8b5cf6,
     #ff3dbb
   );
-  background-size: 300% 300%;
-  animation: var(--animate-holo);
+  background-size: 100% 100%;
 }
 
 @utility holo-text {
   background: linear-gradient(110deg, #ffb347, #ff3dbb, #4da3ff, #19e6c1, #ffb347);
-  background-size: 300% 300%;
-  animation: var(--animate-holo);
+  background-size: 100% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

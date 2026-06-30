@@ -145,7 +145,7 @@ export default function CardDetail({ slug }: { slug: string }) {
             <CardFrame card={card} size="lg" interactive3d />
             {card.modelUrl && (
               <p className="mt-3 text-center text-[11px] uppercase tracking-[0.2em] text-faint">
-                Drag to rotate the 3D model
+                Interactive 3D collectible
               </p>
             )}
           </div>
