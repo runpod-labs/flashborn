@@ -118,30 +118,34 @@ export default function CardFrame({
   const isCharacter = kind === "character";
 
   const ref = useRef<HTMLDivElement>(null);
-  const [m, setM] = useState({ px: 0, py: 0, active: false });
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const [rot, setRot] = useState({ rx: 0, ry: 0, dragging: false });
 
-  function onMove(e: React.MouseEvent) {
-    // Tilt the WHOLE card like holding it in your hand. Everything on the card —
-    // including the 3D model / artwork — skews together with the frame. It only
-    // changes skew/perspective, never position, and the model never orbits on
-    // its own.
-    const el = ref.current;
-    if (!el) return;
-    const b = el.getBoundingClientRect();
-    const px = (e.clientX - b.left) / b.width - 0.5;
-    const py = (e.clientY - b.top) / b.height - 0.5;
-    setM({ px, py, active: true });
-  }
-  function onLeave() {
-    setM({ px: 0, py: 0, active: false });
-  }
-
-  // Turn left/right (and a little up/down), clamped so you never flip past the
-  // edge to the back of the card.
+  // Tilt the WHOLE card like holding it in your hand — ONLY while click-dragging
+  // (not on hover, which felt jumpy). Rotation tracks the drag delta from where
+  // you grabbed, so clicking doesn't snap. The model/artwork skews together with
+  // the frame; nothing changes position and the model never orbits on its own.
   const clamp = (v: number, lim: number) => Math.max(-lim, Math.min(lim, v));
-  const transform = m.active
-    ? `rotateX(${clamp(-m.py * 70, 30)}deg) rotateY(${clamp(m.px * 130, 55)}deg)`
-    : "rotateX(0deg) rotateY(0deg)";
+
+  function onPointerDown(e: React.PointerEvent) {
+    start.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setRot((r) => ({ ...r, dragging: true }));
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    const el = ref.current;
+    if (!start.current || !el) return;
+    const b = el.getBoundingClientRect();
+    const dx = (e.clientX - start.current.x) / b.width;
+    const dy = (e.clientY - start.current.y) / b.height;
+    setRot({ rx: clamp(-dy * 55, 18), ry: clamp(dx * 75, 30), dragging: true });
+  }
+  function endDrag() {
+    start.current = null;
+    setRot({ rx: 0, ry: 0, dragging: false });
+  }
+
+  const transform = `rotateX(${rot.rx}deg) rotateY(${rot.ry}deg)`;
 
   return (
     <div
@@ -150,12 +154,17 @@ export default function CardFrame({
     >
       <div
         ref={ref}
-        onMouseMove={onMove}
-        onMouseLeave={onLeave}
-        className="relative h-full w-full rounded-2xl transition-transform duration-150 ease-out"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        className="relative h-full w-full touch-none rounded-2xl"
         style={{
           transform,
           transformStyle: "preserve-3d",
+          // Instant 1:1 tracking while dragging; smooth ease back to flat on release.
+          transition: rot.dragging ? "none" : "transform 280ms ease-out",
+          cursor: rot.dragging ? "grabbing" : "grab",
         }}
       >
         {/* Legendary holographic trim ring */}
@@ -195,7 +204,15 @@ export default function CardFrame({
               }}
             />
             {show3d ? (
-              <ModelViewer src={card.modelUrl!} poster={card.artworkUrl ?? undefined} className="rounded-lg" />
+              <ModelViewer
+                src={card.modelUrl!}
+                poster={card.artworkUrl ?? undefined}
+                className="rounded-lg"
+                // Orbit the real model in sync with the card tilt so it shows
+                // true 3D depth instead of a flat skewed image.
+                yaw={rot.ry * 0.9}
+                pitch={rot.rx * 0.7}
+              />
             ) : card.artworkUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -236,7 +253,7 @@ export default function CardFrame({
             <RarityGem rarity={card.rarity} />
           </div>
 
-          {/* ---------- Ability / lore box ---------- */}
+          {/* ---------- Ability box (lore lives on the detail page, not here) ---------- */}
           {!compact && (
             <div className="relative z-10 mx-3 mt-2 rounded-md px-3 py-2 panel">
               {card.keyword && (
@@ -260,11 +277,6 @@ export default function CardFrame({
                 !card.keyword && (
                   <p className="text-[11px] italic text-faint">No combat ability.</p>
                 )
-              )}
-              {card.lore && size === "lg" && (
-                <p className="mt-1.5 border-t border-edge pt-1.5 text-[11px] italic leading-snug text-muted">
-                  {card.lore}
-                </p>
               )}
             </div>
           )}

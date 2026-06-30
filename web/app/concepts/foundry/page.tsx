@@ -622,7 +622,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Styles() {
   return (
-    <style jsx global>{`
+    <style dangerouslySetInnerHTML={{ __html: `
       .fb-blueprint {
         background-image: radial-gradient(#2a313a 1px, transparent 1px);
         background-size: 22px 22px;
@@ -641,6 +641,6 @@ function Styles() {
           opacity: 0.25;
         }
       }
-    `}</style>
+    ` }} />
   );
 }

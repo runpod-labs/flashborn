@@ -98,7 +98,7 @@ export default function ChromeNoirPage() {
       {/* one thin animated crimson scan line */}
       <div className="cn-scan pointer-events-none fixed left-0 right-0 -z-10" />
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes cn-scan-move {
           0% { transform: translateY(-10vh); opacity: 0; }
           8% { opacity: 1; }
@@ -115,7 +115,7 @@ export default function ChromeNoirPage() {
         }
         @keyframes cn-blink { 0%, 70% { opacity: 1; } 71%, 100% { opacity: 0.25; } }
         .cn-blink { animation: cn-blink 2.4s steps(1) infinite; }
-      `}</style>
+      ` }} />
 
       {/* ===================== HEADER ===================== */}
       <header className="relative z-10">

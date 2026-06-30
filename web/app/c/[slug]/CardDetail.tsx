@@ -6,7 +6,7 @@ import { Authenticated } from "convex/react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import type { FactionId, RoleId, RarityId, KeywordId } from "@flashborn/shared";
-import { KEYWORD_DEFS } from "@flashborn/shared";
+import { KEYWORD_DEFS, FACTION_DEFS } from "@flashborn/shared";
 import CardFrame, { type CardFrameData } from "@/components/CardFrame";
 import { ButtonLink } from "@/components/Button";
 import ShareButton from "@/components/ShareButton";
@@ -104,53 +104,75 @@ export default function CardDetail({ slug }: { slug: string }) {
   const keywordDef = card.keyword ? KEYWORD_DEFS[card.keyword] : null;
   const kind = card.kind ?? "character";
   const isCharacter = kind === "character";
+  const factionDef = FACTION_DEFS[card.faction];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <Link
-        href="/explore"
-        className="text-xs uppercase tracking-[0.2em] text-faint transition-colors hover:text-neon"
-      >
-        ← Explore
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/explore"
+          className="text-xs uppercase tracking-[0.2em] text-faint transition-colors hover:text-neon"
+        >
+          ← Explore
+        </Link>
+        <ShareButton
+          iconOnly
+          title={`${card.name} — Flashborn`}
+          text={`${card.name} — a ${r.name} ${isCharacter ? ROLE_LABEL[card.role] : KIND_LABEL[kind]} in Flashborn.`}
+          accent={f.primary}
+        />
+      </div>
 
       <div className="mt-6 grid gap-12 lg:grid-cols-[400px_1fr]">
         {/* Interactive 3D card — it already carries the name, faction, role,
-            rarity, stats, ability and lore, so the column beside it must NOT
-            repeat any of that. */}
+            rarity, stats and ability, so the column beside it must NOT repeat
+            any of that. It holds the background context instead. */}
         <div className="flex justify-center lg:justify-start">
           <div className="sticky top-24">
             <CardFrame card={card} size="lg" interactive3d />
           </div>
         </div>
 
-        {/* Actions & reference only — nothing that's already on the card. */}
+        {/* Background & reference — context you can't read off the card. */}
         <div className="flex flex-col justify-center">
-          <div className="lg:max-w-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted">
-              Share this card
+          <div className="lg:max-w-md">
+            {/* Faction background */}
+            <h2
+              className="text-xs font-bold uppercase tracking-[0.3em]"
+              style={{ color: f.primary }}
+            >
+              {factionDef.name}
+            </h2>
+            <p className="mt-3 text-[15px] leading-relaxed text-grid-fg/85">
+              {factionDef.identity}
             </p>
-            <p className="mt-2 text-sm text-muted">
-              This is the public page for {card.name}. Anyone you send the link
-              to can rotate the live 3D collectible.
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              <span className="font-semibold text-grid-fg/80">Doctrine — </span>
+              {factionDef.gameplay}
             </p>
-            <div className="mt-4">
-              <ShareButton
-                title={`${card.name} — Flashborn`}
-                text={`${card.name} — a ${r.name} ${isCharacter ? ROLE_LABEL[card.role] : KIND_LABEL[kind]} in Flashborn.`}
-                accent={f.primary}
-              />
-            </div>
 
-            {/* Keyword rules — the card shows the tag, this explains what it does. */}
+            {/* Card / character background */}
+            {card.lore && (
+              <div
+                className="mt-7 border-l-2 pl-4"
+                style={{ borderColor: `${f.primary}66` }}
+              >
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-faint">
+                  {isCharacter ? "Dossier" : "Background"}
+                </h3>
+                <p className="mt-1.5 text-sm italic leading-relaxed text-muted">
+                  {card.lore}
+                </p>
+              </div>
+            )}
+
+            {/* Keyword rules — the card shows the tag, this explains the rule. */}
             {keywordDef && (
               <div
-                className="mt-8 rounded-lg border px-4 py-3"
+                className="mt-7 rounded-lg border px-4 py-3"
                 style={{ borderColor: `${f.primary}55`, background: `${f.primary}10` }}
               >
-                <p
-                  className="text-[10px] font-bold uppercase tracking-[0.25em] text-faint"
-                >
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-faint">
                   Keyword
                 </p>
                 <p

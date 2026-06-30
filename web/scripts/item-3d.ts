@@ -13,6 +13,12 @@ import path from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import sharp from "sharp";
+import { Agent, setGlobalDispatcher } from "undici";
+
+// The 3D worker holds the HTTP connection open for the whole GPU job (cold
+// start ~113s + reconstruction). Node's default fetch gives up waiting for
+// response headers after ~300s — lift that ceiling to 15 min.
+setGlobalDispatcher(new Agent({ headersTimeout: 900_000, bodyTimeout: 900_000 }));
 
 function env(key: string): string {
   const file = path.join(__dirname, "..", ".env.local");
@@ -94,13 +100,21 @@ async function main() {
   const artBuf = Buffer.from(await (await fetch(card.artworkUrl)).arrayBuffer());
   const refB64 = (await sharp(artBuf).resize({ width: 768 }).png({ compressionLevel: 9 }).toBuffer()).toString("base64");
 
-  // 2) object multiview front/left/back
+  // 2) object multiview front/left/back — reuse PNGs already on disk so a
+  // rerun (e.g. after a 3D timeout) doesn't re-spend on image generation.
   const sids: Record<string, string> = {};
   for (const v of ["front", "left", "back"] as const) {
-    const png = await genImage(objPrompt(v), 7, refB64);
-    fs.writeFileSync(path.join(scratch, `${slug}_${v}.png`), png);
+    const file = path.join(scratch, `${slug}_${v}.png`);
+    let png: Buffer;
+    if (fs.existsSync(file)) {
+      png = fs.readFileSync(file);
+      console.log(`  • view ${v} (cached)`);
+    } else {
+      png = await genImage(objPrompt(v), 7, refB64);
+      fs.writeFileSync(file, png);
+      console.log(`  ✓ view ${v}`);
+    }
     sids[v] = await upload(png, "image/png");
-    console.log(`  ✓ view ${v}`);
   }
   const [fUrl, lUrl, bUrl] = await Promise.all([
     client.query(api.files.getUrl, { storageId: sids.front as any }),

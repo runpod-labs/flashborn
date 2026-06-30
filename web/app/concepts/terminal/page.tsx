@@ -274,7 +274,7 @@ export default function TerminalConceptPage() {
         </div>
       </main>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes tm-blink {
           0%,
           49% {
@@ -323,7 +323,7 @@ export default function TerminalConceptPage() {
           animation: tm-flick 6s infinite;
           mix-blend-mode: screen;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

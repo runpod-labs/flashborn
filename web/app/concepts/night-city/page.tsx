@@ -336,8 +336,8 @@ export default function NightCityConcept() {
         </main>
       )}
 
-      {/* ===== component-scoped CSS ===== */}
-      <style jsx global>{`
+      {/* ===== global CSS (plain <style>; styled-jsx breaks hydration under reactCompiler) ===== */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .nc-stripe {
           background: repeating-linear-gradient(
             45deg,
@@ -398,7 +398,7 @@ export default function NightCityConcept() {
               2px 0 rgba(0, 240, 255, 0.7);
           }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

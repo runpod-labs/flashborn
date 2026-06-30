@@ -23,6 +23,7 @@ type ModelViewerAttributes = DetailedHTMLProps<
   "camera-orbit"?: string;
   "min-camera-orbit"?: string;
   "max-camera-orbit"?: string;
+  "interpolation-decay"?: string;
   "field-of-view"?: string;
   exposure?: string;
   "environment-image"?: string;
@@ -48,10 +49,16 @@ export default function ModelViewer({
   src,
   poster,
   className = "",
+  yaw = 0,
+  pitch = 0,
 }: {
   src: string;
   poster?: string;
   className?: string;
+  // Camera offset driven by the card's in-hand tilt, so the real 3D model
+  // turns/tilts WITH the card (true depth) instead of looking like a flat image.
+  yaw?: number;
+  pitch?: number;
 }) {
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(
@@ -97,7 +104,8 @@ export default function ModelViewer({
           src={src}
           poster={poster}
           alt="3D collectible"
-          camera-orbit="0deg 82deg 105%"
+          camera-orbit={`${yaw}deg ${82 - pitch}deg 105%`}
+          interpolation-decay="50"
           field-of-view="32deg"
           interaction-prompt="none"
           shadow-intensity="1"
