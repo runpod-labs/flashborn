@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# builds
+.next/
+out/
+dist/
+build/
+
+# convex
+web/convex/_generated/
+
+# env
+.env
+.env.*
+!.env.example
+
+# python / flash workers
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.tar.gz
+.flash/
+
+# editor / os
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# generated assets (local scratch)
+/tmp-assets/
+
+# local scratch (generated test assets, QA screenshots)
+.scratch/

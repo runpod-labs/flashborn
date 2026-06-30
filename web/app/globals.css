@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+/* ============================================================
+   FLASHBORN — cyberpunk dark design system (Tailwind v4)
+   Faction identity must read stronger than rarity.
+   ============================================================ */
+
+@theme {
+  /* Core surface tokens (consumed by the root layout body) */
+  --color-grid-bg: #05070d;
+  --color-grid-fg: #e6edf6;
+
+  /* Layered surfaces for panels / cards / chrome */
+  --color-surface: #0a0e18;
+  --color-surface-2: #0e1422;
+  --color-surface-3: #131b2e;
+  --color-edge: #1d2740;
+  --color-muted: #8492aa;
+  --color-faint: #5a6781;
+
+  /* Brand neon (used for logo, CTAs, generic accents) */
+  --color-neon: #19e6c1;
+  --color-neon-2: #4da3ff;
+  --color-accent: #8b5cf6;
+
+  /* Faction colors (sacred) */
+  --color-kg: #4da3ff;
+  --color-kg-2: #eaf6ff;
+  --color-os: #ff3347;
+  --color-os-2: #ff8a00;
+  --color-pr: #19e6c1;
+  --color-pr-2: #ffd447;
+  --color-gw: #8b5cf6;
+  --color-gw-2: #ff3dbb;
+
+  /* Rarity colors */
+  --color-rarity-common: #9aa7b4;
+  --color-rarity-uncommon: #46d39a;
+  --color-rarity-rare: #4da3ff;
+  --color-rarity-legendary: #ffb347;
+
+  --font-display: var(--font-geist-sans);
+
+  /* Keyframes registered into the theme so utilities resolve */
+  --animate-holo: holo-shimmer 6s linear infinite;
+  --animate-holo-fast: holo-shimmer 3s linear infinite;
+  --animate-rim: rim-pulse 3.5s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-scan: scan 4s linear infinite;
+}
+
+@keyframes holo-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rim-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Global ambient: near-black with a subtle neon grid texture
+   ---------------------------------------------------------------- */
+body {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--color-grid-bg);
+  background-image:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgba(77, 163, 255, 0.1),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 90% 60% at 90% 110%,
+      rgba(139, 92, 246, 0.08),
+      transparent 55%
+    ),
+    linear-gradient(
+      to right,
+      rgba(124, 152, 200, 0.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(124, 152, 200, 0.045) 1px,
+      transparent 1px
+    );
+  background-size:
+    100% 100%,
+    100% 100%,
+    44px 44px,
+    44px 44px;
+  background-attachment: fixed;
+}
+
+/* ----------------------------------------------------------------
+   Utilities
+   ---------------------------------------------------------------- */
+@utility text-glow {
+  text-shadow: 0 0 12px var(--tw-glow, rgba(25, 230, 193, 0.7));
+}
+
+/* Neon framing: drives faction glow on cards/badges via --fx-glow */
+@utility neon-frame {
+  box-shadow:
+    0 0 0 1px var(--fx-color, rgba(255, 255, 255, 0.15)) inset,
+    0 0 18px var(--fx-glow, rgba(25, 230, 193, 0.35)),
+    0 0 40px -8px var(--fx-glow, rgba(25, 230, 193, 0.25));
+}
+
+@utility neon-text {
+  color: var(--fx-color, var(--color-neon));
+  text-shadow: 0 0 10px var(--fx-glow, rgba(25, 230, 193, 0.55));
+}
+
+/* Holographic legendary trim. Apply to a border/overlay element. */
+@utility holo-trim {
+  background: linear-gradient(
+    110deg,
+    #ff3dbb,
+    #ffb347,
+    #19e6c1,
+    #4da3ff,
+    #8b5cf6,
+    #ff3dbb
+  );
+  background-size: 300% 300%;
+  animation: var(--animate-holo);
+}
+
+@utility holo-text {
+  background: linear-gradient(110deg, #ffb347, #ff3dbb, #4da3ff, #19e6c1, #ffb347);
+  background-size: 300% 300%;
+  animation: var(--animate-holo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glassy panel surface */
+@utility panel {
+  background:
+    linear-gradient(160deg, rgba(19, 27, 46, 0.7), rgba(10, 14, 24, 0.85));
+  border: 1px solid var(--color-edge);
+  backdrop-filter: blur(8px);
+}
+
+/* Thin scrollbar for dark UI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge) transparent;
+}
+
+::selection {
+  background: rgba(25, 230, 193, 0.3);
+  color: #fff;
+}
