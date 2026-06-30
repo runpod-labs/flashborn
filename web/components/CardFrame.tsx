@@ -209,10 +209,10 @@ export default function CardFrame({
                 poster={card.artworkUrl ?? undefined}
                 className="rounded-lg"
                 // Orbit the real model in sync with the card tilt so it shows
-                // true 3D depth instead of a flat skewed image. Yaw is negated so
-                // the model turns the SAME way as the card (tilt right → turn right).
+                // true 3D depth instead of a flat skewed image. Both axes negated
+                // so the model turns the SAME way as the card (right→right, up→up).
                 yaw={-rot.ry * 0.9}
-                pitch={rot.rx * 0.7}
+                pitch={-rot.rx * 0.7}
               />
             ) : card.artworkUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
