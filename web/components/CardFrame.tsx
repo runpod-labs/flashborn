@@ -121,6 +121,10 @@ export default function CardFrame({
   const [m, setM] = useState({ px: 0, py: 0, active: false });
 
   function onMove(e: React.MouseEvent) {
+    // Only 2D cards tilt in-hand. 3D cards do NOT move at all: turning is done by
+    // orbiting the real 3D model (model-viewer camera-controls), so the frame
+    // stays put and the figure rotates cleanly instead of looking skewed.
+    if (show3d) return;
     const el = ref.current;
     if (!el) return;
     const b = el.getBoundingClientRect();
@@ -132,15 +136,9 @@ export default function CardFrame({
     setM({ px: 0, py: 0, active: false });
   }
 
-  // 3D cards: move/lift the whole card (translate + scale) so it responds in
-  // your hand, but NEVER rotate it — the model-viewer lives on the card surface,
-  // so a rotateX/rotateY would reproject the model and shift its perspective.
-  // 2D cards have no model, so they get the richer in-hand rotation tilt.
-  const transform = !m.active
-    ? "translate3d(0,0,0)"
-    : show3d
-      ? `translate3d(${m.px * 26}px, ${m.py * 22}px, 0) scale(1.04)`
-      : `rotateX(${-m.py * 9}deg) rotateY(${m.px * 11}deg) scale(1.02)`;
+  const transform = m.active
+    ? `rotateX(${-m.py * 9}deg) rotateY(${m.px * 11}deg) scale(1.02)`
+    : "rotateX(0) rotateY(0)";
 
   return (
     <div
@@ -157,12 +155,6 @@ export default function CardFrame({
           transformStyle: "preserve-3d",
         }}
       >
-        {/* Outer faction glow */}
-        <div
-          className="pointer-events-none absolute -inset-1 rounded-2xl opacity-70 blur-xl transition-opacity duration-300 group-hover:opacity-100"
-          style={{ background: f.gradient }}
-        />
-
         {/* Legendary holographic trim ring */}
         {isLegendary && (
           <div className="holo-trim pointer-events-none absolute -inset-[2px] rounded-2xl opacity-90" />

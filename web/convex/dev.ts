@@ -117,6 +117,15 @@ export const dumpAssets = query({
   },
 });
 
+// Attach a generated GLB to an existing published card (for the 3D object test).
+export const setCardModel = mutation({
+  args: { cardId: v.id("cardDefinitions"), modelStorageId: v.id("_storage") },
+  handler: async (ctx, { cardId, modelStorageId }) => {
+    await ctx.db.patch(cardId, { modelStorageId });
+    return "ok";
+  },
+});
+
 function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }

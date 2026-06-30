@@ -12,11 +12,18 @@ type ModelViewerAttributes = DetailedHTMLProps<
   poster?: string;
   alt?: string;
   "camera-controls"?: boolean;
+  "disable-zoom"?: boolean;
+  "disable-pan"?: boolean;
+  "disable-tap"?: boolean;
   "auto-rotate"?: boolean;
   "rotation-per-second"?: string;
   "shadow-intensity"?: string;
   "interaction-prompt"?: string;
   "auto-rotate-delay"?: string;
+  "camera-orbit"?: string;
+  "min-camera-orbit"?: string;
+  "max-camera-orbit"?: string;
+  "field-of-view"?: string;
   exposure?: string;
   "environment-image"?: string;
   loading?: string;
@@ -90,11 +97,17 @@ export default function ModelViewer({
           src={src}
           poster={poster}
           alt="3D collectible"
-          camera-orbit="0deg 80deg 105%"
-          field-of-view="32deg"
+          camera-controls
           disable-zoom
           disable-pan
           disable-tap
+          camera-orbit="0deg 82deg 105%"
+          // Drag turns the REAL 3D model left/right (true 3D, never a skewed
+          // flat image). Clamped azimuth so you see the sides but never the
+          // back; clamped polar so it stays upright. No auto-rotate.
+          min-camera-orbit="-55deg 65deg auto"
+          max-camera-orbit="55deg 98deg auto"
+          field-of-view="32deg"
           shadow-intensity="1"
           exposure="1.05"
           interaction-prompt="none"
@@ -104,9 +117,6 @@ export default function ModelViewer({
             width: "100%",
             height: "100%",
             background: "transparent",
-            // display-only: the character stays put (no spin / no orbit to the
-            // back). The parent CardFrame provides the in-hand tilt instead.
-            pointerEvents: "none",
             "--poster-color": "transparent",
           } as React.CSSProperties}
         />
