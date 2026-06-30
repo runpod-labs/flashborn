@@ -19,30 +19,6 @@ type CardDoc = CardFrameData & {
   lore?: string | null;
 };
 
-function Stat({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div
-      className="flex flex-col items-center rounded-lg border px-5 py-3"
-      style={{ borderColor: `${color}55`, background: `${color}12` }}
-    >
-      <span className="font-display text-2xl font-black" style={{ color }}>
-        {value}
-      </span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-faint">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 function OwnedInstances({ cardId }: { cardId: Id<"cardDefinitions"> }) {
   const instances = useQuery(api.collection.myInstances, {
     cardDefinition: cardId,
@@ -139,115 +115,60 @@ export default function CardDetail({ slug }: { slug: string }) {
       </Link>
 
       <div className="mt-6 grid gap-12 lg:grid-cols-[400px_1fr]">
-        {/* Interactive 3D card */}
+        {/* Interactive 3D card — it already carries the name, faction, role,
+            rarity, stats, ability and lore, so the column beside it must NOT
+            repeat any of that. */}
         <div className="flex justify-center lg:justify-start">
           <div className="sticky top-24">
             <CardFrame card={card} size="lg" interactive3d />
-            {card.modelUrl && (
-              <p className="mt-3 text-center text-[11px] uppercase tracking-[0.2em] text-faint">
-                Interactive 3D collectible
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Info */}
-        <div>
-          <div
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.25em]"
-            style={{ background: `${f.primary}1f`, color: f.primary }}
-          >
-            {f.name}
-          </div>
-
-          <h1
-            className={`mt-4 font-display text-5xl font-black tracking-tight ${r.holo ? "holo-text" : ""}`}
-            style={r.holo ? undefined : { color: f.secondary }}
-          >
-            {card.name}
-          </h1>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-            <span
-              className={`font-semibold uppercase tracking-wider ${r.holo ? "holo-text" : ""}`}
-              style={r.holo ? undefined : { color: r.color }}
-            >
-              {r.name}
-            </span>
-            <span className="text-faint">·</span>
-            <span className="text-muted">
-              {isCharacter ? ROLE_LABEL[card.role] : KIND_LABEL[kind]}
-            </span>
-          </div>
-
-          {/* Stats — items/places only carry an energy cost; the effect is the ability. */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Stat label="Cost" value={card.cost} color={f.secondary} />
-            {isCharacter && (
-              <>
-                <Stat label="Attack" value={card.attack} color={f.primary} />
-                <Stat label="Health" value={card.health} color={f.primary} />
-              </>
-            )}
-          </div>
-
-          {/* Share — this is the global, public page for this card */}
-          <div className="mt-6">
-            <ShareButton
-              title={`${card.name} — Flashborn`}
-              text={`${card.name} — a ${r.name} ${ROLE_LABEL[card.role]} from the ${f.name} faction in Flashborn.`}
-              accent={f.primary}
-            />
-          </div>
-
-          {/* Keyword */}
-          {keywordDef && (
-            <div
-              className="mt-6 rounded-lg border px-4 py-3"
-              style={{ borderColor: `${f.primary}55`, background: `${f.primary}10` }}
-            >
-              <p
-                className="text-xs font-bold uppercase tracking-[0.2em]"
-                style={{ color: f.primary }}
-              >
-                {keywordDef.name}
-              </p>
-              <p className="mt-1 text-sm text-muted">{keywordDef.text}</p>
-            </div>
-          )}
-
-          {/* Ability */}
-          <div className="mt-6">
-            <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-muted">
-              Ability
-            </h2>
-            {card.abilityTitle && (
-              <p className="mt-1 font-semibold" style={{ color: f.secondary }}>
-                {card.abilityTitle}
-              </p>
-            )}
-            <p className="mt-1 text-grid-fg/90">
-              {card.abilityText ?? "No combat ability."}
+        {/* Actions & reference only — nothing that's already on the card. */}
+        <div className="flex flex-col justify-center">
+          <div className="lg:max-w-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted">
+              Share this card
             </p>
-          </div>
-
-          {/* Lore */}
-          {card.lore && (
-            <div className="mt-6 border-l-2 pl-4" style={{ borderColor: `${f.primary}66` }}>
-              <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-muted">
-                Lore
-              </h2>
-              <p className="mt-1 text-sm italic leading-relaxed text-muted">
-                {card.lore}
-              </p>
+            <p className="mt-2 text-sm text-muted">
+              This is the public page for {card.name}. Anyone you send the link
+              to can rotate the live 3D collectible.
+            </p>
+            <div className="mt-4">
+              <ShareButton
+                title={`${card.name} — Flashborn`}
+                text={`${card.name} — a ${r.name} ${isCharacter ? ROLE_LABEL[card.role] : KIND_LABEL[kind]} in Flashborn.`}
+                accent={f.primary}
+              />
             </div>
-          )}
 
-          {/* Ownership (auth only) */}
-          <div className="mt-8">
-            <Authenticated>
-              <OwnedInstances cardId={card._id} />
-            </Authenticated>
+            {/* Keyword rules — the card shows the tag, this explains what it does. */}
+            {keywordDef && (
+              <div
+                className="mt-8 rounded-lg border px-4 py-3"
+                style={{ borderColor: `${f.primary}55`, background: `${f.primary}10` }}
+              >
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.25em] text-faint"
+                >
+                  Keyword
+                </p>
+                <p
+                  className="mt-1 text-sm font-bold uppercase tracking-[0.15em]"
+                  style={{ color: f.primary }}
+                >
+                  {keywordDef.name}
+                </p>
+                <p className="mt-1 text-sm text-muted">{keywordDef.text}</p>
+              </div>
+            )}
+
+            {/* Ownership (auth only) */}
+            <div className="mt-8">
+              <Authenticated>
+                <OwnedInstances cardId={card._id} />
+              </Authenticated>
+            </div>
           </div>
         </div>
       </div>

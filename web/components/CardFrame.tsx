@@ -118,24 +118,29 @@ export default function CardFrame({
   const isCharacter = kind === "character";
 
   const ref = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
+  const [m, setM] = useState({ px: 0, py: 0, active: false });
 
   function onMove(e: React.MouseEvent) {
-    // In-hand tilt for 2D cards only. A 3D card is NOT tilted: the model-viewer
-    // lives on the card surface, so any rotateX/rotateY would reproject the
-    // model and change its perspective — exactly what we must avoid. So 3D
-    // cards stay flat and the model perspective is locked.
-    if (show3d) return;
     const el = ref.current;
     if (!el) return;
     const b = el.getBoundingClientRect();
     const px = (e.clientX - b.left) / b.width - 0.5;
     const py = (e.clientY - b.top) / b.height - 0.5;
-    setTilt({ rx: -py * 9, ry: px * 11, active: true });
+    setM({ px, py, active: true });
   }
   function onLeave() {
-    setTilt({ rx: 0, ry: 0, active: false });
+    setM({ px: 0, py: 0, active: false });
   }
+
+  // 3D cards: move/lift the whole card (translate + scale) so it responds in
+  // your hand, but NEVER rotate it — the model-viewer lives on the card surface,
+  // so a rotateX/rotateY would reproject the model and shift its perspective.
+  // 2D cards have no model, so they get the richer in-hand rotation tilt.
+  const transform = !m.active
+    ? "translate3d(0,0,0)"
+    : show3d
+      ? `translate3d(${m.px * 26}px, ${m.py * 22}px, 0) scale(1.04)`
+      : `rotateX(${-m.py * 9}deg) rotateY(${m.px * 11}deg) scale(1.02)`;
 
   return (
     <div
@@ -146,11 +151,9 @@ export default function CardFrame({
         ref={ref}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
-        className="relative h-full w-full rounded-2xl transition-transform duration-200 ease-out"
+        className="relative h-full w-full rounded-2xl transition-transform duration-150 ease-out"
         style={{
-          transform: tilt.active
-            ? `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) scale(1.02)`
-            : "rotateX(0) rotateY(0)",
+          transform,
           transformStyle: "preserve-3d",
         }}
       >
